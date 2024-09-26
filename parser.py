@@ -57,6 +57,9 @@ def recipes_povar(URL):  # Получение рецептов с 1 сайта
 
         recipe_prepare = recipe_area.find("div", class_="instructions")
         recipe_steps = recipe_prepare.find_all("div", class_="instruction")
+
+        # Список для хранения шагов с изображениями и текстом
+        steps_info = []
         # Собираем все данные в словарь
         recipes_dict = {
             "recipe": recipe_name,
