@@ -35,11 +35,10 @@ def recipes_povar(URL):  # Получение рецептов с 1 сайта
         ingrs = recipe_ingr.find("ul", class_="detailed_ingredients no_dots")
         ingr_list = []
 
-		ingr = recipe_ingr.find("ul", class_="detailed_ingredients no_dots") # список ингедиентов
-		ingr_ul = ingr.find("li", class_="ingredient flex-dot-line") # наименование ингредиентв
-		ingr_name = ingr_ul.find("span", class_="name").text.strip() # что написано, сколько и граммы
-		ingr_value = ingr_ul.find("span", class_="value").text.strip()
-		ingr_unit = ingr_ul.find("span", class_="u-unit-name").text.strip()
+        # Находим все <li> с ингредиентами
+        ingr_uls = ingrs.find_all("li", class_="ingredient flex-dot-line")
+        for ingr_ul in ingr_uls:
+            ingr_name = ingr_ul.find("span", class_="name").text.strip()  # Название ингредиента
 
 
 		recipes_dict = ingr_name, ingr_value, ingr_unit # я в душе не ебу это вывод
