@@ -31,3 +31,14 @@ def recipes_povar(URL): # получение рецептов с 1 сайта
 		ingr_name = ingr_ul.find("span", class_="name").text.strip() # что написано, сколько и граммы
 		ingr_value = ingr_ul.find("span", class_="value").text.strip()
 		ingr_unit = ingr_ul.find("span", class_="u-unit-name").text.strip()
+
+
+		recipes_dict = ingr_name, ingr_value, ingr_unit # я в душе не ебу это вывод
+	else:
+		recipes_dict['Ошибка'] = f"Ошибка при запросе: {response.status_code}"
+
+	return recipes_dict
+
+
+result = recipes_povar("https://povar.ru/recipes/kulebyaka_s_myasom-54393.html")
+print(result)
