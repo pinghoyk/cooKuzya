@@ -2,114 +2,103 @@ import requests
 from bs4 import BeautifulSoup
 import re
 
-def recipes_povar(URL):  # Получение рецептов с 1 сайта
-    response = requests.get(URL)
+# Получение рецептов с сайта Povar
+def get_recipe_from_povar(url): 
+    response = requests.get(url)
 
-    recipes_dict = {} # Словарь для хранения данных
+    recipe_data = {}  # Словарь для хранения данных рецепта
 
     if response.status_code == 200:
-        soap = BeautifulSoup(response.text, "html.parser")
+        soup = BeautifulSoup(response.text, "html.parser")
 
-        # Получаем все необходимые блоки с контентом
-        recipes_povar = soap.find("div", id="megaContainer")
-        recipe_container = recipes_povar.find("div", id="container")
-        recipe_wrap = recipe_container.find("div", id="mainWrapper")
-        recipe_area = recipe_wrap.find("div", class_="cont_area hrecipe")
+        # Получаем блок с контентом рецепта
+        mega_container = soup.find("div", id="megaContainer")
+        container = mega_container.find("div", id="container")
+        main_wrapper = container.find("div", id="mainWrapper")
+        recipe_section = main_wrapper.find("div", class_="cont_area hrecipe")
 
         # Название рецепта
-        recipe_name = recipe_area.find("h1", class_="detailed").text.strip()
+        recipe_title = recipe_section.find("h1", class_="detailed").text.strip()
 
-        # Поиск изображения
-        recipe_img_area = recipe_area.find("div", class_="bigImgBox")
-        recipe_link_img = recipe_img_area.find("a")
-        recipe_img = recipe_link_img.find("img", class_="photo")
-        img_src = recipe_img.get('src')
+        # Изображение рецепта
+        image_section = recipe_section.find("div", class_="bigImgBox")
+        image_link = image_section.find("a")
+        image = image_link.find("img", class_="photo")
+        image_src = image.get('src')
 
         # Ингредиенты
-        recipe_ingr = recipe_area.find("div", class_="ingredients_wrapper")
-        recipe_ingr_name = recipe_ingr.find("h2", class_="span").text.strip()
+        ingredients_wrapper = recipe_section.find("div", class_="ingredients_wrapper")
+        ingredients_title = ingredients_wrapper.find("h2", class_="span").text.strip()
 
-        # Получаем все ингредиенты
-        ingrs = recipe_ingr.find("ul", class_="detailed_ingredients no_dots")
-        ingr_list = []
+        # Список ингредиентов
+        ingredients_list = ingredients_wrapper.find("ul", class_="detailed_ingredients no_dots")
+        ingredients = []
 
-        # Находим все <li> с ингредиентами
-        ingr_uls = ingrs.find_all("li", class_="ingredient flex-dot-line")
-        for ingr_ul in ingr_uls:
-            ingr_name = ingr_ul.find("span", class_="name").text.strip()  # Название ингредиента
+        # Находим все ингредиенты
+        ingredient_items = ingredients_list.find_all("li", class_="ingredient flex-dot-line")
+        for ingredient_item in ingredient_items:
+            ingredient_name = ingredient_item.find("span", class_="name").text.strip()
 
-            # Проверяем наличие значения и единицы измерения
-            ingr_value = ingr_ul.find("span", class_="value")
-            ingr_value = ingr_value.text.strip() if ingr_value else ""
+            # Проверка наличия значения и единицы измерения
+            ingredient_quantity = ingredient_item.find("span", class_="value")
+            ingredient_quantity = ingredient_quantity.text.strip() if ingredient_quantity else ""
 
-            ingr_unit = ingr_ul.find("span", class_="u-unit-name")
-            ingr_unit = ingr_unit.text.strip() if ingr_unit else ""
+            ingredient_unit = ingredient_item.find("span", class_="u-unit-name")
+            ingredient_unit = ingredient_unit.text.strip() if ingredient_unit else ""
 
             # Добавляем ингредиент в список
-            ingr_list.append({
-                "name": ingr_name,
-                "quantity": ingr_value,
-                "unit": ingr_unit
+            ingredients.append({
+                "name": ingredient_name,
+                "quantity": ingredient_quantity,
+                "unit": ingredient_unit
             })
 
-        # Поиск заголовка с названием "Как приготовить"
-        recipe_cook = recipe_area.find("h2", string=re.compile(r'Как приготовить')).text.strip()
+        # Заголовок с "Как приготовить"
+        cook_instruction_title = recipe_section.find("h2", string=re.compile(r'Как приготовить')).text.strip()
 
-        recipe_prepare = recipe_area.find("div", class_="instructions")
-        recipe_steps = recipe_prepare.find_all("div", class_="instruction")
+        instruction_section = recipe_section.find("div", class_="instructions")
+        instruction_steps = instruction_section.find_all("div", class_="instruction")
 
-        # Список для хранения шагов с изображениями и текстом
+        # Список шагов с изображениями и описанием
         steps_info = []
 
         # Проход по всем шагам
-        for step in recipe_steps:
-            # Пытаемся найти изображение
-            step_img = step.find("div", class_="detailed_step_photo_big")
+        for step in instruction_steps:
+            # Пытаемся найти изображение шага
+            step_image_section = step.find("div", class_="detailed_step_photo_big")
             
-            if step_img:  # Если изображение есть
-                img_link = step_img.find("a", class_="stepphotos")
-                if img_link:
-                    step_src = img_link.find("img", class_="photo")
-                    if step_src:
-                        step_link = step_src.get('src')
-                    else:
-                        step_link = None
+            if step_image_section:  # Если изображение есть
+                image_link = step_image_section.find("a", class_="stepphotos")
+                if image_link:
+                    step_image = image_link.find("img", class_="photo")
+                    step_image_src = step_image.get('src') if step_image else None
                 else:
-                    step_link = None
+                    step_image_src = None
             else:
-                # Если изображений нет, ищем номер шага
+                # Если изображения нет, находим номер шага
                 step_number = step.find("div", class_="stepNumber")
-                if step_number:
-                    step_link = f"Шаг {step_number.text.strip()}"
-                else:
-                    step_link = "Нет изображения и номера шага"
+                step_image_src = f"Шаг {step_number.text.strip()}" if step_number else "Нет изображения и номера шага"
 
-            # Получаем текст шага
-            recipe_text = step.find("div", class_="detailed_step_description_big").text.strip() if step.find("div", class_="detailed_step_description_big") else "Нет описания"
+            # Описание шага
+            step_description = step.find("div", class_="detailed_step_description_big").text.strip() if step.find("div", class_="detailed_step_description_big") else "Нет описания"
 
             # Добавляем шаг в список
-            steps_info.append({"image_or_step": step_link, "text": recipe_text})
-
-
+            steps_info.append({"image_or_step": step_image_src, "description": step_description})
 
         # Собираем все данные в словарь
-        recipes_dict = {
-            "recipe": recipe_name,
-            "img": img_src,
-            recipe_ingr_name : ingr_list,
-            "cook" : recipe_cook,
-            "steps_info" : steps_info
-
+        recipe_data = {
+            "recipe_name": recipe_title,
+            "image_url": image_src,
+            ingredients_title: ingredients,
+            "instructions_title": cook_instruction_title,
+            "steps": steps_info
         }
 
-
-
-
     else:
-        recipes_dict['Ошибка'] = f"Ошибка при запросе: {response.status_code}"
+        recipe_data['error'] = f"Ошибка при запросе: {response.status_code}"
 
-    return recipes_dict
+    return recipe_data
 
 
-result = recipes_povar("https://povar.ru/recipes/kulebyaka_s_myasom-54393.html")
+result = get_recipe_from_povar("https://povar.ru/recipes/kulebyaka_s_myasom-54393.html")
 print(result)
