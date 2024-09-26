@@ -31,6 +31,9 @@ def recipes_povar(URL):  # Получение рецептов с 1 сайта
 
 		recipe_ingr = recipe_area.find("div", class_="ingredients_wrapper") # ингедиенты с ненужнойц хуйней
 		recipe_ingr_name = recipe_ingr.find("h2", class_="span").text.strip() # название состав и бла-бла
+        # Получаем все ингредиенты
+        ingrs = recipe_ingr.find("ul", class_="detailed_ingredients no_dots")
+        ingr_list = []
 
 		ingr = recipe_ingr.find("ul", class_="detailed_ingredients no_dots") # список ингедиентов
 		ingr_ul = ingr.find("li", class_="ingredient flex-dot-line") # наименование ингредиентв
