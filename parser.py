@@ -52,6 +52,8 @@ def recipes_povar(URL):  # Получение рецептов с 1 сайта
                 "unit": ingr_unit
             })
 
+        # Поиск заголовка с названием "Как приготовить"
+        recipe_cook = recipe_area.find("h2", string=re.compile(r'Как приготовить')).text.strip()
         # Собираем все данные в словарь
         recipes_dict = {
             "recipe": recipe_name,
