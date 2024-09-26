@@ -96,9 +96,14 @@ def recipes_povar(URL):  # Получение рецептов с 1 сайта
         recipes_dict = {
             "recipe": recipe_name,
             "img": img_src,
-            recipe_ingr_name : ingr_list
+            recipe_ingr_name : ingr_list,
+            "cook" : recipe_cook,
+            "steps_info" : steps_info
 
         }
+
+
+
 
     else:
         recipes_dict['Ошибка'] = f"Ошибка при запросе: {response.status_code}"
