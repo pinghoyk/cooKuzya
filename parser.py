@@ -29,8 +29,6 @@ def recipes_povar(URL):  # Получение рецептов с 1 сайта
         recipe_ingr = recipe_area.find("div", class_="ingredients_wrapper")
         recipe_ingr_name = recipe_ingr.find("h2", class_="span").text.strip()
 
-		recipe_ingr = recipe_area.find("div", class_="ingredients_wrapper") # ингедиенты с ненужнойц хуйней
-		recipe_ingr_name = recipe_ingr.find("h2", class_="span").text.strip() # название состав и бла-бла
         # Получаем все ингредиенты
         ingrs = recipe_ingr.find("ul", class_="detailed_ingredients no_dots")
         ingr_list = []
@@ -44,9 +42,6 @@ def recipes_povar(URL):  # Получение рецептов с 1 сайта
             ingr_value = ingr_ul.find("span", class_="value")
             ingr_value = ingr_value.text.strip() if ingr_value else ""
 
-		recipes_dict = ingr_name, ingr_value, ingr_unit # я в душе не ебу это вывод
-	else:
-		recipes_dict['Ошибка'] = f"Ошибка при запросе: {response.status_code}"
             ingr_unit = ingr_ul.find("span", class_="u-unit-name")
             ingr_unit = ingr_unit.text.strip() if ingr_unit else ""
 
@@ -69,5 +64,7 @@ def recipes_povar(URL):  # Получение рецептов с 1 сайта
         recipes_dict['Ошибка'] = f"Ошибка при запросе: {response.status_code}"
 
     return recipes_dict
+
+
 result = recipes_povar("https://povar.ru/recipes/kulebyaka_s_myasom-54393.html")
 print(result)
