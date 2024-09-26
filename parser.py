@@ -47,9 +47,27 @@ def recipes_povar(URL):  # Получение рецептов с 1 сайта
 		recipes_dict = ingr_name, ingr_value, ingr_unit # я в душе не ебу это вывод
 	else:
 		recipes_dict['Ошибка'] = f"Ошибка при запросе: {response.status_code}"
+            ingr_unit = ingr_ul.find("span", class_="u-unit-name")
+            ingr_unit = ingr_unit.text.strip() if ingr_unit else ""
 
-	return recipes_dict
+            # Добавляем ингредиент в список
+            ingr_list.append({
+                "name": ingr_name,
+                "quantity": ingr_value,
+                "unit": ingr_unit
+            })
 
+        # Собираем все данные в словарь
+        recipes_dict = {
+            "recipe": recipe_name,
+            "img": img_src,
+            recipe_ingr_name : ingr_list
 
+        }
+
+    else:
+        recipes_dict['Ошибка'] = f"Ошибка при запросе: {response.status_code}"
+
+    return recipes_dict
 result = recipes_povar("https://povar.ru/recipes/kulebyaka_s_myasom-54393.html")
 print(result)
