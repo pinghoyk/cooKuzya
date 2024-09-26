@@ -40,6 +40,9 @@ def recipes_povar(URL):  # Получение рецептов с 1 сайта
         for ingr_ul in ingr_uls:
             ingr_name = ingr_ul.find("span", class_="name").text.strip()  # Название ингредиента
 
+            # Проверяем наличие значения и единицы измерения
+            ingr_value = ingr_ul.find("span", class_="value")
+            ingr_value = ingr_value.text.strip() if ingr_value else ""
 
 		recipes_dict = ingr_name, ingr_value, ingr_unit # я в душе не ебу это вывод
 	else:
