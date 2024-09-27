@@ -121,5 +121,13 @@ def recipes_menu(URL):
         menu_block = soap.find("div", id="main")
         menu_container = menu_block.find("div", class_="container")
         menu_main = menu_container.find("main", class_="column")
+
+        # Название рецепта
+        menu_zagolovok = menu_main.find("h1").text.strip()
+
+        # Перехожу в блок с картинками и составом
+        menu_content = menu_main.find("div", class_="content")
+        menu_section = menu_content.find("section", id="pt_info")
+        menu_recipe = menu_section.find("div", class_="recipe-top columns")
 print(result)
 
