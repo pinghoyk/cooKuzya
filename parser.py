@@ -155,5 +155,23 @@ def recipes_menu(URL):
 
 
 
+
+        # recipes_menu_dict = {
+        # "h1": menu_halfs
+        # }
+
+    else:
+        recipes_menu_dict['Ошибка'] = f"Ошибка при запросе: {response.status_code}"
+
+    return recipes_menu_dict 
+
+
+
+
+result = recipes_menu("https://1000.menu/cooking/88049-gulyash-iz-kuricy-s-podlivkoi-na-skovorode")
 print(result)
+
+
+# result = recipes_povar("https://povar.ru/recipes/kulebyaka_s_myasom-54393.html")
+# print(result)
 
