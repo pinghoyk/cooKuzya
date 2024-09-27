@@ -116,5 +116,10 @@ def recipes_menu(URL):
     if response.status_code == 200:
 
         soap = BeautifulSoup(response.text, "html.parser")
+
+        # Перехожу в сам рецепт
+        menu_block = soap.find("div", id="main")
+        menu_container = menu_block.find("div", class_="container")
+        menu_main = menu_container.find("main", class_="column")
 print(result)
 
