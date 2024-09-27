@@ -143,7 +143,13 @@ def recipes_menu(URL):
         # Получаю пецепт
         container_recipe = menu_halfs[1]
         print(container_recipe)
+        ingr_menu = container_recipe.find("div", id="ingredients")
 
+        ingr_zagolovok = ingr_menu.find("h3", class_="my-0")
+
+        list_ingr = ingr_menu.find("form", id="recept-list")
+
+        
 
 
 
