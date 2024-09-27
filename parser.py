@@ -92,15 +92,13 @@ def recipes_povar(URL):
             steps_info.append({"image_or_step": step_link, "text": recipe_text})
 
 
-
         # Собираем все данные в словарь
         recipes_dict = {
             "recipe": recipe_name,
             "img": img_src,
             recipe_ingr_name : ingr_list,
             "cook" : recipe_cook,
-            "steps_info" : steps_info
-
+            "steps_info" : steps_info,
         }
 
     else:
@@ -109,6 +107,14 @@ def recipes_povar(URL):
     return recipes_dict
 
 
-result = recipes_povar("https://povar.ru/recipes/kulebyaka_s_myasom-54393.html")
+# олучение рецептов с сайта 1000menu
+def recipes_menu(URL):
+    response = requests.get(URL)
+
+    recipes_menu_dict = {} # Словарь для хранения данных
+
+    if response.status_code == 200:
+
+        soap = BeautifulSoup(response.text, "html.parser")
 print(result)
 
