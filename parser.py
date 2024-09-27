@@ -129,5 +129,31 @@ def recipes_menu(URL):
         menu_content = menu_main.find("div", class_="content")
         menu_section = menu_content.find("section", id="pt_info")
         menu_recipe = menu_section.find("div", class_="recipe-top columns")
+
+        # Получаю два блока
+        menu_halfs = menu_recipe.find_all("div", class_="column is-half clf")
+
+
+        # Получаю картинку
+        container_photo = menu_halfs[0]
+        carousel_photo = container_photo.find("div", class_="carousel-wrap wide-box is-flex pb-2 noprint")
+        menu_img = carousel_photo.find("a", class_="foto_gallery bl")
+        menu_link = menu_img.get("href")
+
+        # Получаю пецепт
+        container_recipe = menu_halfs[1]
+        print(container_recipe)
+
+
+
+
+
+
+
+
+
+
+
+
 print(result)
 
