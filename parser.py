@@ -2,7 +2,7 @@ import requests
 from bs4 import BeautifulSoup
 import re
 
-url = URL
+# url = URL
 
 # Функция для отправки запросов и получения данных
 def sending_requests(URL):
