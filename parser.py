@@ -106,7 +106,6 @@ def get_recipes_povar(URL):
                 # Добавляем шаг в список
                 steps_info.append({"image_or_step": step_link, "text": recipe_text})
 
-
             # Собираем все данные в словарь
             # povar_dict = {
             #     "recipe": recipe_name,
@@ -117,21 +116,17 @@ def get_recipes_povar(URL):
             # }
         else:
             povar_dict['Ошибка'] = f"Ошибка при запросе: {response.status_code}"
-
-        
-
-
     return povar_dict
 
 
-# олучение рецептов с сайта 1000menu
-def recipes_menu(URL):
-    response = sending_requests(URL)  # Получаем response с помощью функции
+# Получение рецептов с сайта 1000.menu
+def get_recipes_menu(URL):
+    response = sending_requests(URL)
 
-    recipes_menu_dict = {}  # Словарь для хранения данных
+    menu_dict = {}  # Словарь для хранения данных
 
     if response is None:
-        recipes_menu_dict['Ошибка'] = "Не удалось получить данные"  # Если ошибка в запросе
+        menu_dict['Ошибка'] = "Не удалось получить данные"
     else:
         if response.status_code == 200:
             soap = BeautifulSoup(response.text, "html.parser")
@@ -168,7 +163,6 @@ def recipes_menu(URL):
             # Находим все <div> с ингредиентами
             div_ingr = ingr_menu.find_all("div", class_="ingredient list-item")
 
-            # Итерируем по каждому элементу в списке ингредиентов
             for ingredient in div_ingr:
                 # Получение названия ингредиента
                 div_name = ingredient.find("div", class_="list-column align-top")
@@ -189,31 +183,42 @@ def recipes_menu(URL):
                 else:
                     div_gr = None
 
-
-
-                # Добавляем ингредиент в ingredients_dict
+                # Добавляем ингредиент в список
                 ingredients_dict.append({
-                    "Ингредиент": div_link,
-                    "Количество": div_kol,
-                    "Единица": unit_name,
-                    "Граммы": div_gr
+                    "ingr": div_link,
+                    "addition": div_kol,
+                    "col": unit_name,
+                    "unit": div_gr
                 })
 
+
+
+
+
+            
+
+
+
+
+
+
+
+
             # Заполняем recipes_menu_dict
-            recipes_menu_dict[menu_zagolovok] = {
+            menu_dict[menu_zagolovok] = {
                 "Изображение": menu_link,
                 "Ингредиенты": ingredients_dict
             }
         else:
-            recipes_menu_dict['Ошибка'] = f"Ошибка при запросе: {response.status_code}"
+            menu_dict['Ошибка'] = f"Ошибка при запросе: {response.status_code}"
 
-    return recipes_menu_dict 
+    return menu_dict 
 
 # Запускаем функцию
-# result = recipes_menu("https://1000.menu/cooking/43425-kurica-po-taiski")
-# print(result)
-
-
-result = get_recipes_povar("https://povar.ru/recipes/kulebyaka_s_myasom-54393.html")
+result = get_recipes_menu("https://1000.menu/cooking/43425-kurica-po-taiski")
 print(result)
+
+
+# result = get_recipes_povar("https://povar.ru/recipes/kulebyaka_s_myasom-54393.html")
+# print(result)
 
