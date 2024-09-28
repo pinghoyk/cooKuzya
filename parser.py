@@ -164,10 +164,11 @@ def recipes_menu(URL):
 
             change_gr = div_unit.find("select", class_="recalc_s_num") if div_unit else None
             if change_gr:
-                ingr_gr = change_gr.find("option", attrs={"value": "1"})
+                ingr_gr = change_gr.find("option", attrs={"selected": True})
                 div_gr = ingr_gr.text.strip() if ingr_gr else None
             else:
                 div_gr = None
+
 
 
             # Добавляем ингредиент в ingredients_dict
