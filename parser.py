@@ -111,10 +111,9 @@ def recipes_povar(URL):
 def recipes_menu(URL):
     response = requests.get(URL)
 
-    recipes_menu_dict = {} # Словарь для хранения данных
+    recipes_menu_dict = {}  # Словарь для хранения данных
 
     if response.status_code == 200:
-
         soap = BeautifulSoup(response.text, "html.parser")
 
         # Перехожу в сам рецепт
