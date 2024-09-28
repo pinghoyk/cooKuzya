@@ -154,6 +154,20 @@ def recipes_menu(URL):
             div_name = ingredient.find("div", class_="list-column align-top")
             div_link = div_name.find("a", class_="name").text.strip()
 
+            # Получение количества продукта
+            span_kol = div_name.find("span", class_="ingredient-info mr-1")
+            div_kol = span_kol.text.strip() if span_kol else None
+
+            # Получение единицы измерения
+            div_unit = ingredient.find("div", class_="list-column no-shrink")
+            unit_name = div_unit.find("span", class_="squant value").text.strip() if div_unit else None
+
+            change_gr = div_unit.find("select", class_="recalc_s_num") if div_unit else None
+            if change_gr:
+                ingr_gr = change_gr.find("option", attrs={"value": "1"})
+                div_gr = ingr_gr.text.strip() if ingr_gr else None
+            else:
+                div_gr = None
 
 
 
