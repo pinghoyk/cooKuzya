@@ -170,22 +170,27 @@ def recipes_menu(URL):
                 div_gr = None
 
 
+            # Добавляем ингредиент в ingredients_dict
+            ingredients_dict.append({
+                "Ингредиент": div_link,
+                "Количество": div_kol,
+                "Единица": unit_name,
+                "Граммы": div_gr
+            })
 
+        # Заполняем recipes_menu_dict
+        recipes_menu_dict[menu_zagolovok] = {
+            "Изображение": menu_link,
+            "Ингредиенты": ingredients_dict
+        }
 
-
-
-        # recipes_menu_dict = {
-        # "h1": menu_halfs
-        # }
 
     else:
         recipes_menu_dict['Ошибка'] = f"Ошибка при запросе: {response.status_code}"
 
     return recipes_menu_dict 
 
-
-
-
+# Запускаем функцию
 result = recipes_menu("https://1000.menu/cooking/88049-gulyash-iz-kuricy-s-podlivkoi-na-skovorode")
 print(result)
 
