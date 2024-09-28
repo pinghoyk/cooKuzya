@@ -108,13 +108,13 @@ def get_recipes_povar(URL):
 
 
             # Собираем все данные в словарь
-            povar_dict = {
-                "recipe": recipe_name,
-                "img": img_src,
-                recipe_ingr_name : ingr_list,
-                "cook" : recipe_cook,
-                "steps_info" : steps_info,
-            }
+            # povar_dict = {
+            #     "recipe": recipe_name,
+            #     "img": img_src,
+            #     recipe_ingr_name : ingr_list,
+            #     "how_cook" : recipe_cook,
+            #     "steps_info" : steps_info,
+            # }
         else:
             povar_dict['Ошибка'] = f"Ошибка при запросе: {response.status_code}"
 
