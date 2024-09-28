@@ -21,32 +21,32 @@ def get_recipes_povar(URL):
     povar_dict = {}  # Словарь для хранения данных
 
     if response is None:
-        povar_dict['Ошибка'] = "Не удалось получить данные"  # Если ошибка в запросе
+        povar_dict['Ошибка'] = "Не удалось получить данные"
     else:
         if response.status_code == 200:
             soap = BeautifulSoup(response.text, "html.parser")
 
             # Получаем все необходимые блоки с контентом
-            recipes_povar = soap.find("div", id="megaContainer")
-            recipe_container = recipes_povar.find("div", id="container")
-            recipe_wrap = recipe_container.find("div", id="mainWrapper")
-            recipe_area = recipe_wrap.find("div", class_="cont_area hrecipe")
+            povar_megaContainer = soap.find("div", id="megaContainer")
+            povar_container = povar_megaContainer.find("div", id="container")
+            povar_wrap = povar_container.find("div", id="mainWrapper")
+            povar_area = povar_wrap.find("div", class_="cont_area hrecipe")
 
             # Название рецепта
-            recipe_name = recipe_area.find("h1", class_="detailed").text.strip()
+            recipe_name = povar_area.find("h1", class_="detailed").text.strip()
 
             # Поиск изображения
-            recipe_img_area = recipe_area.find("div", class_="bigImgBox")
-            recipe_link_img = recipe_img_area.find("a")
-            recipe_img = recipe_link_img.find("img", class_="photo")
-            img_src = recipe_img.get('src')
+            povar_img_area = povar_area.find("div", class_="bigImgBox")
+            povar_link_img = povar_img_area.find("a")
+            povar_img = povar_link_img.find("img", class_="photo")
+            img_src = povar_img.get('src')
 
             # Ингредиенты
-            recipe_ingr = recipe_area.find("div", class_="ingredients_wrapper")
-            recipe_ingr_name = recipe_ingr.find("h2", class_="span").text.strip()
+            povar_ingr = povar_area.find("div", class_="ingredients_wrapper")
+            recipe_ingr_name = povar_ingr.find("h2", class_="span").text.strip()
 
             # Получаем все ингредиенты
-            ingrs = recipe_ingr.find("ul", class_="detailed_ingredients no_dots")
+            ingrs = povar_ingr.find("ul", class_="detailed_ingredients no_dots")
             ingr_list = []
 
             # Находим все <li> с ингредиентами
@@ -69,9 +69,9 @@ def get_recipes_povar(URL):
                 })
 
             # Поиск заголовка с названием "Как приготовить"
-            recipe_cook = recipe_area.find("h2", string=re.compile(r'Как приготовить')).text.strip()
+            recipe_cook = povar_area.find("h2", string=re.compile(r'Как приготовить')).text.strip()
 
-            recipe_prepare = recipe_area.find("div", class_="instructions")
+            recipe_prepare = povar_area.find("div", class_="instructions")
             recipe_steps = recipe_prepare.find_all("div", class_="instruction")
 
             # Список для хранения шагов с изображениями и текстом
@@ -82,7 +82,7 @@ def get_recipes_povar(URL):
                 # Пытаемся найти изображение
                 step_img = step.find("div", class_="detailed_step_photo_big")
                 
-                if step_img:  # Если изображение есть
+                if step_img:
                     img_link = step_img.find("a", class_="stepphotos")
                     if img_link:
                         step_src = img_link.find("img", class_="photo")
@@ -210,10 +210,10 @@ def recipes_menu(URL):
     return recipes_menu_dict 
 
 # Запускаем функцию
-result = recipes_menu("https://1000.menu/cooking/43425-kurica-po-taiski")
-print(result)
-
-
-# result = recipes_povar("https://povar.ru/recipes/kulebyaka_s_myasom-54393.html")
+# result = recipes_menu("https://1000.menu/cooking/43425-kurica-po-taiski")
 # print(result)
+
+
+result = get_recipes_povar("https://povar.ru/recipes/kulebyaka_s_myasom-54393.html")
+print(result)
 
