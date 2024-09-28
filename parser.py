@@ -132,28 +132,27 @@ def recipes_menu(URL):
         # Получаю два блока
         menu_halfs = menu_recipe.find_all("div", class_="column is-half clf")
 
-
         # Получаю картинку
         container_photo = menu_halfs[0]
         carousel_photo = container_photo.find("div", class_="carousel-wrap wide-box is-flex pb-2 noprint")
         menu_img = carousel_photo.find("a", class_="foto_gallery bl")
         menu_link = menu_img.get("href")
 
-        # Получаю пецепт
+        # Получаю рецепт
         container_recipe = menu_halfs[1]
-        print(container_recipe)
         ingr_menu = container_recipe.find("div", id="ingredients")
 
-        ingr_zagolovok = ingr_menu.find("h3", class_="my-0")
+        # Создаем список для хранения ингредиентов
+        ingredients_dict = []
 
-        list_ingr = ingr_menu.find("form", id="recept-list")
+        # Находим все <div> с ингредиентами
+        div_ingr = ingr_menu.find_all("div", class_="ingredient list-item")
 
-        
-
-
-
-
-
+        # Итерируем по каждому элементу в списке ингредиентов
+        for ingredient in div_ingr:
+            # Получение названия ингредиента
+            div_name = ingredient.find("div", class_="list-column align-top")
+            div_link = div_name.find("a", class_="name").text.strip()
 
 
 
