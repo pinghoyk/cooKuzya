@@ -14,21 +14,14 @@ def sending_requests(URL):
         return None, f"Ошибка при запросе: {e}"
 
 
-
-
-
-
-
-
 # Получение рецептов с сайта Povar.ru
-def recipes_povar(URL):
+def get_recipes_povar(URL):
+    response = sending_requests(URL)
 
-    response = sending_requests(URL)  # Получаем response с помощью функции
-
-    recipes_dict = {}  # Словарь для хранения данных
+    povar_dict = {}  # Словарь для хранения данных
 
     if response is None:
-        recipes_dict['Ошибка'] = "Не удалось получить данные"  # Если ошибка в запросе
+        povar_dict['Ошибка'] = "Не удалось получить данные"  # Если ошибка в запросе
     else:
         if response.status_code == 200:
             soap = BeautifulSoup(response.text, "html.parser")
@@ -115,7 +108,7 @@ def recipes_povar(URL):
 
 
             # Собираем все данные в словарь
-            recipes_dict = {
+            povar_dict = {
                 "recipe": recipe_name,
                 "img": img_src,
                 recipe_ingr_name : ingr_list,
@@ -123,12 +116,12 @@ def recipes_povar(URL):
                 "steps_info" : steps_info,
             }
         else:
-            recipes_dict['Ошибка'] = f"Ошибка при запросе: {response.status_code}"
+            povar_dict['Ошибка'] = f"Ошибка при запросе: {response.status_code}"
 
         
 
 
-    return recipes_dict
+    return povar_dict
 
 
 # олучение рецептов с сайта 1000menu
