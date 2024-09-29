@@ -224,7 +224,8 @@ def get_recipes_menu(URL):
             # Заполняем recipes_menu_dict
             menu_dict[menu_zagolovok] = {
                 "Изображение": menu_link,
-                "Ингредиенты": ingredients_dict
+                "Ингредиенты": ingredients_dict,
+                "Рецепт" : steps
             }
         else:
             menu_dict['Ошибка'] = f"Ошибка при запросе: {response.status_code}"
@@ -232,7 +233,7 @@ def get_recipes_menu(URL):
     return menu_dict 
 
 # Запускаем функцию
-result = get_recipes_menu("https://1000.menu/cooking/43425-kurica-po-taiski")
+result = get_recipes_menu("https://1000.menu/cooking/88049-gulyash-iz-kuricy-s-podlivkoi-na-skovorode")
 print(result)
 
 
