@@ -220,7 +220,7 @@ def get_recipes_menu(URL):
                     }
                     steps.append(step)
 
-            # # Заполняем recipes_menu_dict
+            # Заполняем recipes_menu_dict
             # menu_dict[menu_zagolovok] = {
             #     "photo": menu_link,
             #     "ingredients": ingredients_dict,
@@ -232,9 +232,8 @@ def get_recipes_menu(URL):
 
 
 # Запускаем функцию
-result = get_recipes_menu("https://1000.menu/cooking/88049-gulyash-iz-kuricy-s-podlivkoi-na-skovorode")
-print(result)
-
 # result = get_recipes_povar("https://povar.ru/recipes/kulebyaka_s_myasom-54393.html")
+
+# result = get_recipes_menu("https://1000.menu/cooking/88049-gulyash-iz-kuricy-s-podlivkoi-na-skovorode")
 # print(result)
 
