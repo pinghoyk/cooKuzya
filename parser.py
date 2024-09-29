@@ -200,14 +200,26 @@ def get_recipes_menu(URL):
 
                 steps = []  # Список для хранения всех шагов
 
-            
+                for li in menu_li:
+                    # Заголовок шага (если он есть)
+                    step_zagolovok = li.find("h4")
+                    step_zagolovok_text = step_zagolovok.text.strip() if step_zagolovok else "Заголовок отсутствует"
 
+                    # Ссылка на фото шага (если есть)
+                    step_photo = li.find("a", href=True)
+                    step_photo_href = step_photo['href'] if step_photo else "Фото отсутствует"
 
+                    # Текст инструкции для шага
+                    menu_p = li.find("p", class_="instruction")
+                    menu_p_text = menu_p.text.strip() if menu_p else "Инструкция отсутствует"
 
-
-
-
-
+                    # Сохраняем шаг как словарь
+                    step = {
+                        "zagolovok": step_zagolovok_text,
+                        "photo": step_photo_href,
+                        "instruction": menu_p_text
+                    }
+                    steps.append(step)
 
             # Заполняем recipes_menu_dict
             menu_dict[menu_zagolovok] = {
