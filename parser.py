@@ -191,9 +191,14 @@ def get_recipes_menu(URL):
                     "unit": div_gr
                 })
 
+                menu_sectionSteps = menu_section.find("section", id="pt_steps")
 
+                zagolovok_step = menu_sectionSteps.find("h2").text.strip()
 
+                menu_instr = menu_sectionSteps.find("ol", class_="instructions")
+                menu_li = menu_instr.find_all("li")
 
+                steps = []  # Список для хранения всех шагов
 
             
 
