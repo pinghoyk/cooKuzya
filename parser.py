@@ -191,25 +191,24 @@ def get_recipes_menu(URL):
                     "unit": div_gr
                 })
 
+                # Переход к рецепту
                 menu_sectionSteps = menu_section.find("section", id="pt_steps")
 
                 zagolovok_step = menu_sectionSteps.find("h2").text.strip()
 
+                # Получение шагов рецепта
                 menu_instr = menu_sectionSteps.find("ol", class_="instructions")
                 menu_li = menu_instr.find_all("li")
 
                 steps = []  # Список для хранения всех шагов
 
                 for li in menu_li:
-                    # Заголовок шага (если он есть)
                     step_zagolovok = li.find("h4")
                     step_zagolovok_text = step_zagolovok.text.strip() if step_zagolovok else "Заголовок отсутствует"
 
-                    # Ссылка на фото шага (если есть)
                     step_photo = li.find("a", href=True)
                     step_photo_href = step_photo['href'] if step_photo else "Фото отсутствует"
 
-                    # Текст инструкции для шага
                     menu_p = li.find("p", class_="instruction")
                     menu_p_text = menu_p.text.strip() if menu_p else "Инструкция отсутствует"
 
@@ -221,21 +220,20 @@ def get_recipes_menu(URL):
                     }
                     steps.append(step)
 
-            # Заполняем recipes_menu_dict
-            menu_dict[menu_zagolovok] = {
-                "Изображение": menu_link,
-                "Ингредиенты": ingredients_dict,
-                "Рецепт" : steps
-            }
+            # # Заполняем recipes_menu_dict
+            # menu_dict[menu_zagolovok] = {
+            #     "photo": menu_link,
+            #     "ingredients": ingredients_dict,
+            #     "recipe" : steps
+            # }
         else:
             menu_dict['Ошибка'] = f"Ошибка при запросе: {response.status_code}"
-
     return menu_dict 
+
 
 # Запускаем функцию
 result = get_recipes_menu("https://1000.menu/cooking/88049-gulyash-iz-kuricy-s-podlivkoi-na-skovorode")
 print(result)
-
 
 # result = get_recipes_povar("https://povar.ru/recipes/kulebyaka_s_myasom-54393.html")
 # print(result)
