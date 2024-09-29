@@ -14,7 +14,7 @@ def sending_requests(URL):
         return None, f"Ошибка при запросе: {e}"
 
 
-# Получение рецептов с сайта Povar.ru
+# Функция для получения рецепта с сайта Povar.ru
 def get_recipes_povar(URL):
     response = sending_requests(URL)
 
@@ -107,19 +107,19 @@ def get_recipes_povar(URL):
                 steps_info.append({"image_or_step": step_link, "text": recipe_text})
 
             # Собираем все данные в словарь
-            # povar_dict = {
-            #     "recipe": recipe_name,
-            #     "img": img_src,
-            #     recipe_ingr_name : ingr_list,
-            #     "how_cook" : recipe_cook,
-            #     "steps_info" : steps_info,
-            # }
+            povar_dict = {
+                "recipe": recipe_name,
+                "img": img_src,
+                recipe_ingr_name : ingr_list,
+                "how_cook" : recipe_cook,
+                "steps_info" : steps_info,
+            }
         else:
             povar_dict['Ошибка'] = f"Ошибка при запросе: {response.status_code}"
     return povar_dict
 
 
-# Получение рецептов с сайта 1000.menu
+# Функция для получения рецепта с сайта 1000.menu
 def get_recipes_menu(URL):
     response = sending_requests(URL)
 
@@ -232,8 +232,8 @@ def get_recipes_menu(URL):
 
 
 # Запускаем функцию
-# result = get_recipes_povar("https://povar.ru/recipes/kulebyaka_s_myasom-54393.html")
+result = get_recipes_povar("https://povar.ru/recipes/kulebyaka_s_myasom-54393.html")
 
 # result = get_recipes_menu("https://1000.menu/cooking/88049-gulyash-iz-kuricy-s-podlivkoi-na-skovorode")
-# print(result)
+print(result)
 
