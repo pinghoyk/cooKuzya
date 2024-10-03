@@ -48,3 +48,35 @@ def SQL_request(request, params=()):
         cursor.execute(request, params)
         if request.strip().lower().startswith('select'):
             return cursor.fetchone()
+
+
+def now_time():
+    return datetime.now(pytz.timezone('Europe/Moscow')).strftime("%Y-%m-%d %H:%M:%S")
+
+
+@bot.message_handler(commands=['start'])
+def start(message):
+    user_id = message.chat.id
+    username = message.chat.username
+    first_name = message.from_user.first_name
+
+    user = SQL_request("SELECT * FROM users WHERE user_id = ?", (user_id,))
+    if user is None:
+        SQL_request('INSERT INTO users (user_id, message, username, first_name, time_registration) VALUES (?, ?, ?, ?, ?)',
+                    (user_id, message.message_id, username, first_name, now_time()))
+        bot.send_message(user_id, f"Добро пожаловать {first_name}!", reply_markup=keyboard_main)
+        print(f"{LOG}Зарегистрирован новый пользователь")
+    else:
+        SQL_request("UPDATE users SET message = ? WHERE user_id = ?", (message.message_id, user_id))
+        bot.send_message(user_id, f"С возвращением! {first_name}!", reply_markup=keyboard_main)
+        print(f"{LOG}Пользователь уже существует")
+
+
+@bot.callback_query_handler(func=lambda call: True)
+def callback_query(call):
+    print(f"Вызов: {call.data}")
+
+
+init_db()  # Инициализируем базу данных
+print(f"{LOG}Бот запущен...")
+bot.polling(none_stop=True)
