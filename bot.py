@@ -14,11 +14,11 @@ LOG = "Логи: "
 # Кнопки
 buttons_main = [
     InlineKeyboardButton(text="📜 Мои рецепты", callback_data="my_recipe"),
-    InlineKeyboardButton(text="📂 Категории", callback_data="recipe_category"),
     InlineKeyboardButton(text="🥕 По ингредиентам", callback_data="recipe_ingredients"),
-    InlineKeyboardButton(text="🎲 Случайные", callback_data="recipe_random"),
     InlineKeyboardButton(text="💡 Советы", callback_data="culinary_tips"),
+    InlineKeyboardButton(text="📂 Категории", callback_data="recipe_category"),   
     InlineKeyboardButton(text="⚙️ Настройки", callback_data="settings"),
+    InlineKeyboardButton(text="🎲 Случайные", callback_data="recipe_random"),
 ]
 
 # Клавиатура
@@ -68,7 +68,7 @@ def start(message):
         print(f"{LOG}Зарегистрирован новый пользователь")
     else:
         SQL_request("UPDATE users SET message = ? WHERE user_id = ?", (message.message_id, user_id))
-        bot.send_message(user_id, f"С возвращением! {first_name}!", reply_markup=keyboard_main)
+        bot.send_message(user_id, f"С возвращением, {first_name}!", reply_markup=keyboard_main)
         print(f"{LOG}Пользователь уже существует")
 
 
