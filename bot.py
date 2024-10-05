@@ -205,6 +205,14 @@ def callback_query(call):
     elif call.data == "edit_recipe":
         bot.edit_message_text("Редактируем рецепт. Введите новое название:", user_id, message_id)
         bot.register_next_step_handler_by_chat_id(user_id, handle_name)
+
+    elif call.data == "change_name":
+        bot.edit_message_text("Введите новое название рецепта:", user_id, message_id)
+        bot.register_next_step_handler_by_chat_id(user_id, handle_name)
+
+    elif call.data == "change_ingredients":
+        bot.edit_message_text("Введите новые ингредиенты:", user_id, message_id)
+        bot.register_next_step_handler_by_chat_id(user_id, handle_ingredients)
 init_db()  # Инициализируем базу данных
 print(f"{LOG}Бот запущен...")
 bot.polling(none_stop=True)
