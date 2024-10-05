@@ -4,6 +4,7 @@ from datetime import datetime
 import sqlite3
 import pytz
 import config
+import os
 
 bot = telebot.TeleBot(config.API)
 
@@ -34,32 +35,40 @@ keyboard_recipes = InlineKeyboardMarkup(row_width=1)
 keyboard_recipes.add(*buttons_recipe)
 
 
+
+
 # ФУНКЦИИ
+# Функция для создания бд
 def init_db():
-    with sqlite3.connect(DB_PATH) as conn:
-        cursor = conn.cursor()
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS users (
-                id_col INTEGER PRIMARY KEY AUTOINCREMENT,
-                message INTEGER,
-                user_id INTEGER,
-                username TEXT,
-                first_name TEXT,
-                time_registration TIMESTAMP
-            )
-        """)
+    if not os.path.exists(DB_PATH):
+        print(f"{LOG}База данных не найдена, будет создана новая.")
+    try:
+        with sqlite3.connect(DB_PATH) as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS users (
+                    id_col INTEGER PRIMARY KEY AUTOINCREMENT,
+                    message INTEGER,
+                    user_id INTEGER UNIQUE,  -- Уникальный идентификатор для предотвращения дублирования
+                    username TEXT,
+                    first_name TEXT,
+                    time_registration TIMESTAMP
+                )
+            """)
 
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS recipes (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                user_id INTEGER,
-                recipe_name TEXT,
-                ingredients TEXT,
-                instructions TEXT
-            )
-        """)
-    print(f"{LOG}База данных создана!")
-
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS recipes (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    user_id INTEGER,
+                    recipe_name TEXT,
+                    ingredients TEXT,
+                    instructions TEXT
+                )
+            """)
+            conn.commit()
+        print(f"{LOG}База данных успешно инициализирована!")
+    except sqlite3.Error as e:
+        print(f"{LOG}Ошибка при работе с базой данных: {e}")
 
 def SQL_request(request, params=()):
     with sqlite3.connect(DB_PATH) as conn:
