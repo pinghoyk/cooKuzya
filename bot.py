@@ -167,6 +167,11 @@ def callback_query(call):
         recipes = get_user_recipes(user_id)
         bot.edit_message_text("Ваши рецепты:", user_id, message_id, reply_markup=keyboard_recipes)
 
+    elif call.data == 'add_recipe':
+        bot.edit_message_text("Введите название рецепта:", user_id, message_id)
+        bot.register_next_step_handler_by_chat_id(user_id, handle_name)
+
+
 
 init_db()  # Инициализируем базу данных
 print(f"{LOG}Бот запущен...")
