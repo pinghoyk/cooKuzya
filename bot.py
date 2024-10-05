@@ -202,6 +202,9 @@ def callback_query(call):
                     (user_id, recipe['name'], recipe['ingredients'], "\n".join(recipe['instructions'])))
         bot.edit_message_text("Рецепт успешно сохранён!", user_id, message_id)
 
+    elif call.data == "edit_recipe":
+        bot.edit_message_text("Редактируем рецепт. Введите новое название:", user_id, message_id)
+        bot.register_next_step_handler_by_chat_id(user_id, handle_name)
 init_db()  # Инициализируем базу данных
 print(f"{LOG}Бот запущен...")
 bot.polling(none_stop=True)
