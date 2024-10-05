@@ -39,6 +39,16 @@ def init_db():
                 time_registration TIMESTAMP
             )
         """)
+
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS recipes (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER,
+                recipe_name TEXT,
+                ingredients TEXT,
+                instructions TEXT
+            )
+        """)
     print(f"{LOG}База данных создана!")
 
 
