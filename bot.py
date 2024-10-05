@@ -186,6 +186,16 @@ def callback_query(call):
         bot.register_next_step_handler_by_chat_id(user_id, lambda msg: handle_instructions(msg, step, call.message))
 
 
+    elif call.data == "finish_recipe":
+        recipe = recipe_data[user_id]
+        ingredients = recipe.get("ingredients", "")
+        instructions = "\n".join(recipe.get("instructions", []))
+        markup = InlineKeyboardMarkup()
+        markup.add(InlineKeyboardButton(text="Сохранить", callback_data="save_recipe"))
+        markup.add(InlineKeyboardButton(text="Изменить", callback_data="edit_recipe"))
+        bot.edit_message_text(f"Ваш рецепт:\n\nНазвание: {recipe['name']}\n\nСостав: {ingredients}\n\nОписание приготовления:\n{instructions}", user_id, message_id, reply_markup=markup)
+
+
 
 init_db()  # Инициализируем базу данных
 print(f"{LOG}Бот запущен...")
