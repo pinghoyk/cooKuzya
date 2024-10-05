@@ -91,6 +91,20 @@ def update_message(user_id, message_id, step, text, callback_next, callback_chan
     bot.edit_message_text(f"{step.capitalize()}: {text}", user_id, message_id, reply_markup=markup)
 
 
+def handle_name(message):
+    user_id = message.chat.id
+    recipe_data[user_id] = {"name": message.text}
+    markup = InlineKeyboardMarkup()
+    markup.add(InlineKeyboardButton(text="Далее", callback_data="next_ingredients"))
+    markup.add(InlineKeyboardButton(text="Изменить", callback_data="change_name")) 
+    
+    # Удаляем предыдущие сообщения
+    delete_previous_messages(user_id, message.message_id)
+    
+    bot.send_message(user_id, f"Название: {recipe_data[user_id]['name']}", reply_markup=markup)
+
+
+
 
 
 @bot.message_handler(commands=['start'])
