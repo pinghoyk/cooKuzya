@@ -11,6 +11,8 @@ bot = telebot.TeleBot(config.API)
 # Глобальные переменные
 DB_PATH = "cook.db"
 LOG = "Логи: "
+recipe_data = {}
+
 
 # Кнопки
 buttons_main = [
@@ -66,12 +68,14 @@ def init_db():
     except sqlite3.Error as e:
         print(f"{LOG}Ошибка при работе с базой данных: {e}")
 
+
+# Функция для подключения к бд
 def SQL_request(request, params=()):
     with sqlite3.connect(DB_PATH) as conn:
         cursor = conn.cursor()
         cursor.execute(request, params)
         if request.strip().lower().startswith('select'):
-            return cursor.fetchall()
+            return cursor.fetchone()
 
 
 def now_time():
