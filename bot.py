@@ -139,7 +139,8 @@ def get_user_recipes(user_id):
         cursor = conn.cursor()
         cursor.execute("SELECT recipe_name, ingredients, instructions FROM recipes WHERE user_id = ?", (user_id,))
         return cursor.fetchall()
-        
+
+
 @bot.message_handler(commands=['start'])
 def start(message):
     user_id = message.chat.id
@@ -162,9 +163,9 @@ def start(message):
 def callback_query(call):
     print(f"Вызов: {call.data}")
 
-    if call.data == 'my_recipe':  
-        bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text="Ваши рецепты:", reply_markup=keyboard_recipes)
-
+    if call.data == 'my_recipe':
+        recipes = get_user_recipes(user_id)
+        bot.edit_message_text("Ваши рецепты:", user_id, message_id, reply_markup=keyboard_recipes)
 
 
 init_db()  # Инициализируем базу данных
