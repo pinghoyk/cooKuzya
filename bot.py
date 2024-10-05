@@ -171,6 +171,9 @@ def callback_query(call):
         bot.edit_message_text("Введите название рецепта:", user_id, message_id)
         bot.register_next_step_handler_by_chat_id(user_id, handle_name)
 
+    elif call.data == "next_ingredients":
+        bot.edit_message_text("Введите ингредиенты:", user_id, message_id)
+        bot.register_next_step_handler_by_chat_id(user_id, handle_ingredients)
 
 
 init_db()  # Инициализируем базу данных
