@@ -24,17 +24,13 @@ buttons_main = [
 
 buttons_recipe = [
     InlineKeyboardButton(text=" ➕ Добавить рецепт", callback_data="add_recipe"),
-    # InlineKeyboardButton(text=" 💾 Сохраненные рецепты", callback_data="save_recipe"),
 ]
 
+
 # Клавиатура
-keyboard_main = InlineKeyboardMarkup(row_width=2)
-keyboard_main.add(*buttons_main)  # Добавляем все кнопки за один раз
+keyboard_main = InlineKeyboardMarkup(row_width=2).add(*buttons_main)
 
-keyboard_recipes = InlineKeyboardMarkup(row_width=1)
-keyboard_recipes.add(*buttons_recipe)
-
-
+keyboard_recipes = InlineKeyboardMarkup(row_width=1).add(*buttons_recipe)
 
 
 # ФУНКЦИИ
