@@ -14,11 +14,13 @@ LOG = "Логи: "
 # Кнопки
 buttons_main = [
     InlineKeyboardButton(text="📜 Мои рецепты", callback_data="my_recipe"),
-    InlineKeyboardButton(text="🥕 По ингредиентам", callback_data="recipe_ingredients"),
-    InlineKeyboardButton(text="💡 Советы", callback_data="culinary_tips"),
-    InlineKeyboardButton(text="📂 Категории", callback_data="recipe_category"),   
-    InlineKeyboardButton(text="⚙️ Настройки", callback_data="settings"),
-    InlineKeyboardButton(text="🎲 Случайные", callback_data="recipe_random"),
+    # InlineKeyboardButton(text="🥕 По ингредиентам", callback_data="recipe_ingredients"),
+    # InlineKeyboardButton(text="💡 Советы", callback_data="culinary_tips"),
+    # InlineKeyboardButton(text="📂 Категории", callback_data="recipe_category"),   
+    # InlineKeyboardButton(text="⚙️ Настройки", callback_data="settings"),
+    # InlineKeyboardButton(text="🎲 Случайные", callback_data="recipe_random"),
+]
+
 buttons_recipe = [
     InlineKeyboardButton(text=" ➕ Добавить рецепт", callback_data="add_recipe"),
     # InlineKeyboardButton(text=" 💾 Сохраненные рецепты", callback_data="save_recipe"),
@@ -32,6 +34,7 @@ keyboard_recipes = InlineKeyboardMarkup(row_width=1)
 keyboard_recipes.add(*buttons_recipe)
 
 
+# ФУНКЦИИ
 def init_db():
     with sqlite3.connect(DB_PATH) as conn:
         cursor = conn.cursor()
@@ -91,6 +94,10 @@ def start(message):
 @bot.callback_query_handler(func=lambda call: True)
 def callback_query(call):
     print(f"Вызов: {call.data}")
+
+    if call.data == 'my_recipe':  
+        bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text="Ваши рецепты:", reply_markup=keyboard_recipes)
+
 
 
 init_db()  # Инициализируем базу данных
