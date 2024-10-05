@@ -95,12 +95,15 @@ def now_time():
 
 
 # Удаляет все предыдущие сообщения
+# Функция для удаления всех предыдущич сообщений
 def delete_previous_messages(user_id, message_id, count=2):
     for i in range(count):
         try:
             bot.delete_message(user_id, message_id - i)
-        except:
-            pass  # Если сообщение не удается удалить, игнорируем ошибку (добавить обработку)
+        except telebot.apihelper.ApiException as e:
+            print(f"Ошибка при удалении сообщения {message_id - i}: {e}")
+        except Exception as e:
+            print(f"Неизвестная ошибка при удалении сообщения {message_id - i}: {e}")
 
 
 # Процесс добавления рецепта
