@@ -73,6 +73,17 @@ def now_time():
     return datetime.now(pytz.timezone('Europe/Moscow')).strftime("%Y-%m-%d %H:%M:%S")
 
 
+# Удаляет все предыдущие сообщения
+def delete_previous_messages(user_id, message_id, count=2):
+    for i in range(count):
+        try:
+            bot.delete_message(user_id, message_id - i)
+        except:
+            pass  # Если сообщение не удается удалить, игнорируем ошибку (добавить обработку)
+
+
+
+
 @bot.message_handler(commands=['start'])
 def start(message):
     user_id = message.chat.id
