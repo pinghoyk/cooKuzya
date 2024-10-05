@@ -97,7 +97,7 @@ def handle_name(message):
     markup = InlineKeyboardMarkup()
     markup.add(InlineKeyboardButton(text="Далее", callback_data="next_ingredients"))
     markup.add(InlineKeyboardButton(text="Изменить", callback_data="change_name")) 
-    
+
     # Удаляем предыдущие сообщения
     delete_previous_messages(user_id, message.message_id)
     
@@ -116,6 +116,22 @@ def handle_ingredients(message):
     
     bot.send_message(user_id, f"Ингредиенты: {recipe_data[user_id]['ingredients']}", reply_markup=markup)
 
+
+def handle_instructions(message, step, call_message):
+    user_id = message.chat.id
+    if "instructions" not in recipe_data[user_id]:
+        recipe_data[user_id]["instructions"] = []
+        
+    recipe_data[user_id]["instructions"].append(f"Шаг {step}: {message.text}")
+
+    markup = InlineKeyboardMarkup()
+    markup.add(InlineKeyboardButton(text="Добавить шаг", callback_data=f"next_step_{step + 1}"))
+    markup.add(InlineKeyboardButton(text="Закончить", callback_data="finish_recipe"))
+
+    # Удаляем сообщение с вводом шага
+    delete_previous_messages(user_id, message.message_id)
+
+    bot.send_message(user_id, f"Шаг {step}: {message.text}", reply_markup=markup)
 
 
 @bot.message_handler(commands=['start'])
