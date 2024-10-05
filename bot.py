@@ -66,7 +66,7 @@ def SQL_request(request, params=()):
         cursor = conn.cursor()
         cursor.execute(request, params)
         if request.strip().lower().startswith('select'):
-            return cursor.fetchone()
+            return cursor.fetchall()
 
 
 def now_time():
