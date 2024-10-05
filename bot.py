@@ -162,6 +162,8 @@ def start(message):
 @bot.callback_query_handler(func=lambda call: True)
 def callback_query(call):
     print(f"Вызов: {call.data}")
+    user_id = call.message.chat.id
+    message_id = call.message.message_id
 
     if call.data == 'my_recipe':
         recipes = get_user_recipes(user_id)
@@ -213,6 +215,7 @@ def callback_query(call):
     elif call.data == "change_ingredients":
         bot.edit_message_text("Введите новые ингредиенты:", user_id, message_id)
         bot.register_next_step_handler_by_chat_id(user_id, handle_ingredients)
+
 init_db()  # Инициализируем базу данных
 print(f"{LOG}Бот запущен...")
 bot.polling(none_stop=True)
