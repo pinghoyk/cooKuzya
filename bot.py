@@ -196,6 +196,11 @@ def callback_query(call):
         bot.edit_message_text(f"Ваш рецепт:\n\nНазвание: {recipe['name']}\n\nСостав: {ingredients}\n\nОписание приготовления:\n{instructions}", user_id, message_id, reply_markup=markup)
 
 
+    elif call.data == "save_recipe":
+        recipe = recipe_data[user_id]
+        SQL_request("INSERT INTO recipes (user_id, recipe_name, ingredients, instructions) VALUES (?, ?, ?, ?)",
+                    (user_id, recipe['name'], recipe['ingredients'], "\n".join(recipe['instructions'])))
+        bot.edit_message_text("Рецепт успешно сохранён!", user_id, message_id)
 
 init_db()  # Инициализируем базу данных
 print(f"{LOG}Бот запущен...")
