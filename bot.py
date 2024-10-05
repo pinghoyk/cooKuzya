@@ -199,7 +199,7 @@ def callback_query(call):
         bot.edit_message_text("Ваши рецепты:", user_id, message_id, reply_markup=keyboard_recipes)
 
     elif call.data == "add_recipe":
-        bot.edit_message_text("Введите название рецепта:", user_id, message_id)
+        bot.edit_message_text("Введите название рецепта:", user_id, message_id, reply_markup=keyboard_markup)
         bot.register_next_step_handler_by_chat_id(user_id, handle_name)
 
     elif call.data == "next_ingredients":
@@ -221,9 +221,12 @@ def callback_query(call):
         recipe = recipe_data[user_id]
         ingredients = recipe.get("ingredients", "")
         instructions = "\n".join(recipe.get("instructions", []))
-        markup = InlineKeyboardMarkup()
-        markup.add(InlineKeyboardButton(text="Сохранить", callback_data="save_recipe"))
-        markup.add(InlineKeyboardButton(text="Изменить", callback_data="edit_recipe"))
+        markup = InlineKeyboardMarkup(row_width=2)
+        markup.add(
+               InlineKeyboardButton(text="Сохранить", callback_data="save_recipe"),
+               InlineKeyboardButton(text="Изменить", callback_data="edit_recipe")
+           )
+        markup.add(InlineKeyboardButton(text="Отмена", callback_data="cancel"))
         bot.edit_message_text(f"Ваш рецепт:\n\nНазвание: {recipe['name']}\n\nСостав: {ingredients}\n\nОписание приготовления:\n{instructions}", user_id, message_id, reply_markup=markup)
 
 
@@ -235,7 +238,9 @@ def callback_query(call):
         recipe = recipe_data[user_id]
         SQL_request("INSERT INTO recipes (user_id, recipe_name, ingredients, instructions) VALUES (?, ?, ?, ?)",
                     (user_id, recipe['name'], recipe['ingredients'], "\n".join(recipe['instructions'])))
-        bot.edit_message_text("Рецепт успешно сохранён!", user_id, message_id)
+        
+        
+        bot.edit_message_text("Рецепт успешно сохранён!", user_id, message_id, reply_markup=keyboard_markup)
 
     elif call.data == "edit_recipe":
         bot.edit_message_text("Редактируем рецепт. Введите новое название:", user_id, message_id)
@@ -248,6 +253,29 @@ def callback_query(call):
     elif call.data == "change_ingredients":
         bot.edit_message_text("Введите новые ингредиенты:", user_id, message_id)
         bot.register_next_step_handler_by_chat_id(user_id, handle_ingredients)
+
+    elif call.data == "btn_back":
+        bot.edit_message_text("Ваши рецепты:", user_id, message_id, reply_markup=keyboard_recipes)
+
+    elif call.data == "back_recipe":
+        user_id = call.message.chat.id
+        first_name = call.message.chat.first_name
+        greeting = get_greeting(first_name)  # Определяем greeting
+        bot.edit_message_text(greeting, chat_id=user_id, message_id=call.message.message_id, reply_markup=keyboard_main)
+
+    elif call.data == "cancel":
+        bot.edit_message_text("Ваши рецепты:", user_id, message_id, reply_markup=keyboard_recipes)
+
+
+
+
+
+
+
+
+
+
+
 
 
 init_db()  # Инициализируем базу данных
