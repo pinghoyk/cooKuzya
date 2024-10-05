@@ -104,6 +104,17 @@ def handle_name(message):
     bot.send_message(user_id, f"Название: {recipe_data[user_id]['name']}", reply_markup=markup)
 
 
+def handle_ingredients(message):
+    user_id = message.chat.id
+    recipe_data[user_id]["ingredients"] = message.text
+    markup = InlineKeyboardMarkup()
+    markup.add(InlineKeyboardButton(text="Далее", callback_data="next_instructions"))
+    markup.add(InlineKeyboardButton(text="Изменить", callback_data="change_ingredients"))  # Добавлено изменение ингредиентов
+
+    # Удаляем предыдущие сообщения
+    delete_previous_messages(user_id, message.message_id)
+    
+    bot.send_message(user_id, f"Ингредиенты: {recipe_data[user_id]['ingredients']}", reply_markup=markup)
 
 
 
