@@ -176,6 +176,17 @@ def callback_query(call):
         bot.register_next_step_handler_by_chat_id(user_id, handle_ingredients)
 
 
+    elif call.data == "next_instructions":
+        bot.edit_message_text("Введите описание к шагу 1:", user_id, message_id)
+        bot.register_next_step_handler_by_chat_id(user_id, lambda msg: handle_instructions(msg, 1, call.message))
+
+    elif call.data.startswith("next_step_"):
+        step = int(call.data.split("_")[-1])
+        bot.edit_message_text(f"Введите описание к шагу {step}:", user_id, message_id)
+        bot.register_next_step_handler_by_chat_id(user_id, lambda msg: handle_instructions(msg, step, call.message))
+
+
+
 init_db()  # Инициализируем базу данных
 print(f"{LOG}Бот запущен...")
 bot.polling(none_stop=True)
