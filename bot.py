@@ -134,6 +134,12 @@ def handle_instructions(message, step, call_message):
     bot.send_message(user_id, f"Шаг {step}: {message.text}", reply_markup=markup)
 
 
+def get_user_recipes(user_id):
+    with sqlite3.connect(DB_PATH) as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT recipe_name, ingredients, instructions FROM recipes WHERE user_id = ?", (user_id,))
+        return cursor.fetchall()
+        
 @bot.message_handler(commands=['start'])
 def start(message):
     user_id = message.chat.id
