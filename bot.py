@@ -82,6 +82,15 @@ def delete_previous_messages(user_id, message_id, count=2):
             pass  # Если сообщение не удается удалить, игнорируем ошибку (добавить обработку)
 
 
+# Процесс добавления рецепта
+def update_message(user_id, message_id, step, text, callback_next, callback_change):
+    recipe_data[user_id][step] = text
+    markup = InlineKeyboardMarkup()
+    markup.add(InlineKeyboardButton(text="Далее", callback_data=callback_next))
+    markup.add(InlineKeyboardButton(text="Изменить", callback_data=callback_change))
+    bot.edit_message_text(f"{step.capitalize()}: {text}", user_id, message_id, reply_markup=markup)
+
+
 
 
 @bot.message_handler(commands=['start'])
