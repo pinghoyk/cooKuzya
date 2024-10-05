@@ -90,11 +90,12 @@ def get_greeting(first_name):
     else:
         return f"Доброй ночи, {first_name}!"
 
+
+# Функция для получения времени
 def now_time():
     return datetime.now(pytz.timezone('Europe/Moscow')).strftime("%Y-%m-%d %H:%M:%S")
 
 
-# Удаляет все предыдущие сообщения
 # Функция для удаления всех предыдущич сообщений
 def delete_previous_messages(user_id, message_id, count=2):
     for i in range(count):
@@ -106,40 +107,43 @@ def delete_previous_messages(user_id, message_id, count=2):
             print(f"Неизвестная ошибка при удалении сообщения {message_id - i}: {e}")
 
 
-# Процесс добавления рецепта
+# Функции для процесса добавления рецепта
 def update_message(user_id, message_id, step, text, callback_next, callback_change):
     recipe_data[user_id][step] = text
-    markup = InlineKeyboardMarkup()
-    markup.add(InlineKeyboardButton(text="Далее", callback_data=callback_next))
-    markup.add(InlineKeyboardButton(text="Изменить", callback_data=callback_change))
-    bot.edit_message_text(f"{step.capitalize()}: {text}", user_id, message_id, reply_markup=markup)
 
+    markup = InlineKeyboardMarkup(row_width=2)
+    markup.add(
+           InlineKeyboardButton(text="Далее", callback_data=callback_next),
+           InlineKeyboardButton(text="Изменить", callback_data=callback_change)
+       )
+
+    bot.edit_message_text(f"{step.capitalize()}: {text}", user_id, message_id, reply_markup=markup)
 
 def handle_name(message):
     user_id = message.chat.id
     recipe_data[user_id] = {"name": message.text}
-    markup = InlineKeyboardMarkup()
-    markup.add(InlineKeyboardButton(text="Далее", callback_data="next_ingredients"))
-    markup.add(InlineKeyboardButton(text="Изменить", callback_data="change_name")) 
+    markup = InlineKeyboardMarkup(row_width=2)
+    markup.add(
+           InlineKeyboardButton(text="Далее", callback_data="next_ingredients"),
+           InlineKeyboardButton(text="Изменить", callback_data="change_name")
+       )
 
-    # Удаляем предыдущие сообщения
     delete_previous_messages(user_id, message.message_id)
     
-    bot.send_message(user_id, f"Название: {recipe_data[user_id]['name']}", reply_markup=markup)
-
+    bot.send_message(user_id, f"Название рецепта: {recipe_data[user_id]['name']}", reply_markup=markup)
 
 def handle_ingredients(message):
     user_id = message.chat.id
     recipe_data[user_id]["ingredients"] = message.text
     markup = InlineKeyboardMarkup()
-    markup.add(InlineKeyboardButton(text="Далее", callback_data="next_instructions"))
-    markup.add(InlineKeyboardButton(text="Изменить", callback_data="change_ingredients"))  # Добавлено изменение ингредиентов
+    markup.add(
+           InlineKeyboardButton(text="Далее", callback_data="next_instructions"),
+           InlineKeyboardButton(text="Изменить", callback_data="change_ingredients")
+       )
 
-    # Удаляем предыдущие сообщения
     delete_previous_messages(user_id, message.message_id)
     
     bot.send_message(user_id, f"Ингредиенты: {recipe_data[user_id]['ingredients']}", reply_markup=markup)
-
 
 def handle_instructions(message, step, call_message):
     user_id = message.chat.id
@@ -147,22 +151,17 @@ def handle_instructions(message, step, call_message):
         recipe_data[user_id]["instructions"] = []
         
     recipe_data[user_id]["instructions"].append(f"Шаг {step}: {message.text}")
-
     markup = InlineKeyboardMarkup()
-    markup.add(InlineKeyboardButton(text="Добавить шаг", callback_data=f"next_step_{step + 1}"))
-    markup.add(InlineKeyboardButton(text="Закончить", callback_data="finish_recipe"))
 
-    # Удаляем сообщение с вводом шага
+    markup.add(
+       InlineKeyboardButton(text="Добавить шаг", callback_data=f"next_step_{step + 1}"),
+       InlineKeyboardButton(text="Закончить", callback_data="finish_recipe")
+    )
+    
     delete_previous_messages(user_id, message.message_id)
 
     bot.send_message(user_id, f"Шаг {step}: {message.text}", reply_markup=markup)
 
-
-def get_user_recipes(user_id):
-    with sqlite3.connect(DB_PATH) as conn:
-        cursor = conn.cursor()
-        cursor.execute("SELECT recipe_name, ingredients, instructions FROM recipes WHERE user_id = ?", (user_id,))
-        return cursor.fetchall()
 
 
 @bot.message_handler(commands=['start'])
@@ -179,7 +178,8 @@ def start(message):
         print(f"{LOG}Зарегистрирован новый пользователь")
     else:
         SQL_request("UPDATE users SET message = ? WHERE user_id = ?", (message.message_id, user_id))
-        bot.send_message(user_id, f"С возвращением, {first_name}!", reply_markup=keyboard_main)
+        greeting = get_greeting(first_name)
+        bot.send_message(user_id, greeting, reply_markup=keyboard_main)
         print(f"{LOG}Пользователь уже существует")
 
 
@@ -190,10 +190,10 @@ def callback_query(call):
     message_id = call.message.message_id
 
     if call.data == 'my_recipe':
-        recipes = get_user_recipes(user_id)
+        recipe = SQL_request("SELECT recipe_name, ingredients, instructions FROM recipes WHERE user_id = ?", (user_id,))
         bot.edit_message_text("Ваши рецепты:", user_id, message_id, reply_markup=keyboard_recipes)
 
-    elif call.data == 'add_recipe':
+    elif call.data == "add_recipe":
         bot.edit_message_text("Введите название рецепта:", user_id, message_id)
         bot.register_next_step_handler_by_chat_id(user_id, handle_name)
 
@@ -222,6 +222,10 @@ def callback_query(call):
         bot.edit_message_text(f"Ваш рецепт:\n\nНазвание: {recipe['name']}\n\nСостав: {ingredients}\n\nОписание приготовления:\n{instructions}", user_id, message_id, reply_markup=markup)
 
 
+    elif call.data == "change_name":
+        bot.edit_message_text("Введите новое название рецепта:", user_id, message_id)
+        bot.register_next_step_handler_by_chat_id(user_id, handle_name)
+
     elif call.data == "save_recipe":
         recipe = recipe_data[user_id]
         SQL_request("INSERT INTO recipes (user_id, recipe_name, ingredients, instructions) VALUES (?, ?, ?, ?)",
@@ -239,6 +243,7 @@ def callback_query(call):
     elif call.data == "change_ingredients":
         bot.edit_message_text("Введите новые ингредиенты:", user_id, message_id)
         bot.register_next_step_handler_by_chat_id(user_id, handle_ingredients)
+
 
 init_db()  # Инициализируем базу данных
 print(f"{LOG}Бот запущен...")
