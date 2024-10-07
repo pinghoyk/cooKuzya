@@ -12,6 +12,7 @@ bot = telebot.TeleBot(config.API)
 DB_PATH = "cook.db"
 LOG = "Логи: "
 recipe_data = {}
+current_steps = {}
 
 
 # Кнопки
@@ -216,7 +217,6 @@ def callback_query(call):
         bot.edit_message_text("Введите ингредиенты:", user_id, message_id)
         bot.register_next_step_handler_by_chat_id(user_id, handle_ingredients)
 
-
     elif call.data == "next_instructions":
         bot.edit_message_text("Введите описание к шагу 1:", user_id, message_id)
         bot.register_next_step_handler_by_chat_id(user_id, lambda msg: handle_instructions(msg, 1, call.message))
@@ -225,7 +225,6 @@ def callback_query(call):
         step = int(call.data.split("_")[-1])
         bot.edit_message_text(f"Введите описание к шагу {step}:", user_id, message_id)
         bot.register_next_step_handler_by_chat_id(user_id, lambda msg: handle_instructions(msg, step, call.message))
-
 
     elif call.data == "finish_recipe":
         recipe = recipe_data[user_id]
@@ -238,11 +237,6 @@ def callback_query(call):
            )
         markup.add(InlineKeyboardButton(text="Отмена", callback_data="cancel"))
         bot.edit_message_text(f"Ваш рецепт:\n\nНазвание: {recipe['name']}\n\nСостав: {ingredients}\n\nОписание приготовления:\n{instructions}", user_id, message_id, reply_markup=markup)
-
-
-    elif call.data == "change_name":
-        bot.edit_message_text("Введите новое название рецепта:", user_id, message_id)
-        bot.register_next_step_handler_by_chat_id(user_id, handle_name)
 
     elif call.data == "save_recipe":
         recipe = recipe_data[user_id]
