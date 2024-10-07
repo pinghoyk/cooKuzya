@@ -26,6 +26,7 @@ buttons_main = [
 
 buttons_recipe = [
     InlineKeyboardButton(text=" ➕ Добавить рецепт", callback_data="add_recipe"),
+    InlineKeyboardButton(text=" 🗃 Личные рецепты", callback_data="create_recipe"),
     InlineKeyboardButton(text="Назад", callback_data="back_recipe")
 ]
 
