@@ -174,6 +174,10 @@ def handle_instructions(message, step, call_message):
     bot.send_message(user_id, f"Шаг {step}: {message.text}", reply_markup=markup)
 
 
+# Функция для получения рецептов от конкретного пользователя
+def get_recipe_user(user_id):
+    recipes = SQL_request("SELECT id, recipe_name, ingredients, instructions FROM recipes WHERE user_id = ?", (user_id,))
+    return recipes if recipes else []
 
 @bot.message_handler(commands=['start'])
 def start(message):
