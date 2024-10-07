@@ -278,6 +278,21 @@ def callback_query(call):
 
 
 
+    if call.data == "create_recipe":
+    user_recipes = get_recipe_user(user_id)
+
+    if user_recipes:
+        markup = InlineKeyboardMarkup()
+        for recipe in user_recipes:
+            recipe_id = recipe[0]
+            recipe_name = recipe[1]
+            markup.add(InlineKeyboardButton(text=recipe_name, callback_data=f"view_recipe_{recipe_id}"))
+
+        bot.edit_message_text("Ваши рецепты:", user_id, call.message.message_id, reply_markup=markup)
+    else:
+        bot.edit_message_text("У вас пока нет сохраненных рецептов.", user_id, call.message.message_id)
+
+
 
 
 
