@@ -76,12 +76,17 @@ def init_db():
 
 
 # Функция для подключения к бд
-def SQL_request(request, params=()):
+def SQL_request(request, params=(), fetchone=False):
     with sqlite3.connect(DB_PATH) as conn:
         cursor = conn.cursor()
         cursor.execute(request, params)
-        if request.strip().lower().startswith('select'):
-            return cursor.fetchone()
+        if fetchone:
+            result = cursor.fetchone()
+        else:
+            result = cursor.fetchall()
+
+        cursor.close()
+        return result
 
 
 # Функция для получения приветствия в зависимости от времени суток
