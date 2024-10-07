@@ -279,19 +279,36 @@ def callback_query(call):
 
 
     if call.data == "create_recipe":
-    user_recipes = get_recipe_user(user_id)
+        user_recipes = get_recipe_user(user_id)
+    
+        if user_recipes:
+            markup = InlineKeyboardMarkup()
+            for recipe in user_recipes:
+                recipe_id = recipe[0]
+                recipe_name = recipe[1]
+                markup.add(InlineKeyboardButton(text=recipe_name, callback_data=f"view_recipe_{recipe_id}"))
+    
+            bot.edit_message_text("Ваши рецепты:", user_id, call.message.message_id, reply_markup=markup)
+        else:
+            bot.edit_message_text("У вас пока нет сохраненных рецептов.", user_id, call.message.message_id)
 
-    if user_recipes:
-        markup = InlineKeyboardMarkup()
-        for recipe in user_recipes:
-            recipe_id = recipe[0]
-            recipe_name = recipe[1]
-            markup.add(InlineKeyboardButton(text=recipe_name, callback_data=f"view_recipe_{recipe_id}"))
 
-        bot.edit_message_text("Ваши рецепты:", user_id, call.message.message_id, reply_markup=markup)
-    else:
-        bot.edit_message_text("У вас пока нет сохраненных рецептов.", user_id, call.message.message_id)
+    elif call.data.startswith("view_recipe_"):
+        recipe_id = int(call.data.split("_")[2])
+        recipe = SQL_request("SELECT recipe_name, ingredients, instructions FROM recipes WHERE id = ?", (recipe_id,))
 
+        if recipe:
+            recipe_name, ingredients, instructions = recipe[0]
+            steps = instructions.split('\n')
+            current_steps[user_id] = (recipe_id, 0)
+
+            bot.edit_message_text(chat_id=user_id, message_id=call.message.message_id, text=f"Рецепт: {recipe_name}\n\nИнгредиенты:\n{ingredients}\n\n", reply_markup=InlineKeyboardMarkup().add(
+                    InlineKeyboardButton(text="Назад", callback_data=f"step_prev_{recipe_id}_0"),
+                    InlineKeyboardButton(text="Далее", callback_data=f"step_next_{recipe_id}_1")
+                )
+            )
+        else:
+            bot.edit_message_text(chat_id=user_id, message_id=call.message.message_id, text="Рецепт не найден.")
 
 
 
