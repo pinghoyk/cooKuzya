@@ -203,18 +203,19 @@ def show_recipes_with_pagination(user_id, call, page=1):
         # Добавляем кнопки "Назад" и "Вперед" для пагинации
         navigation_buttons = []
         if page > 1:
-            navigation_buttons.append(InlineKeyboardButton(text="Назад", callback_data=f"recipes_page_{page - 1}"))
+            navigation_buttons.append(InlineKeyboardButton(text=" ⬅️ Назад", callback_data=f"recipes_page_{page - 1}"))
         else:
-            navigation_buttons.append(InlineKeyboardButton(text="Назад", callback_data="btn_back"))
+            navigation_buttons.append(InlineKeyboardButton(text=" ⬅️ Назад", callback_data="btn_back"))
 
         if page < total_pages:
-            navigation_buttons.append(InlineKeyboardButton(text="Вперед", callback_data=f"recipes_page_{page + 1}"))
+            navigation_buttons.append(InlineKeyboardButton(text=" ➡️ Вперед", callback_data=f"recipes_page_{page + 1}"))
 
         markup_recipes.row(*navigation_buttons)
 
         bot.edit_message_text("Ваши рецепты:", user_id, call.message.message_id, reply_markup=markup_recipes)
     else:
         bot.edit_message_text("У вас нет сохраненных рецептов:(", user_id, call.message.message_id)
+
 
 
 
@@ -323,6 +324,20 @@ def callback_query(call):
     elif call.data.startswith("view_recipe_"):
         recipe_id = int(call.data.split("_")[2])
         recipe = SQL_request("SELECT recipe_name, ingredients, instructions FROM recipes WHERE id = ?", (recipe_id,))
+
+        if recipe:
+            recipe_name, ingredients, instructions = recipe[0]
+            steps = instructions.split('\n')
+            current_steps[user_id] = (recipe_id, 0)  # Начинаем с шага 0
+
+            bot.edit_message_text(chat_id=user_id, message_id=call.message.message_id, text=f"Рецепт: {recipe_name}\n\nИнгредиенты:\n{ingredients}\n\n",
+                reply_markup=InlineKeyboardMarkup().add(
+                    InlineKeyboardButton(text=" ⬅️ Назад", callback_data=f"recipes_page_1"),  # Возврат на первую страницу рецептов
+                    InlineKeyboardButton(text=" ➡️ Далее", callback_data=f"start_recipe_{recipe_id}")  # Переход к шагам
+                )
+            )
+        else:
+            bot.edit_message_text(chat_id=user_id, message_id=call.message.message_id, text="Рецепт не найден.")
 
 
 
