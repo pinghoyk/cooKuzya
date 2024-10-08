@@ -328,6 +328,11 @@ def callback_query(call):
 
 
 
+
+    elif call.data == "nazad_recipes":  # Возврат к списку рецептов
+        user_recipes = get_recipe_user(user_id)
+        show_recipes_with_pagination(user_id, call, page=1)
+
 init_db()  # Инициализируем базу данных
 print(f"{LOG}Бот запущен...")
 bot.polling(none_stop=True)
