@@ -28,11 +28,11 @@ buttons_main = [
 buttons_recipe = [
     InlineKeyboardButton(text=" ➕ Добавить рецепт", callback_data="add_recipe"),
     InlineKeyboardButton(text=" 🗃 Личные рецепты", callback_data="create_recipe"),
-    InlineKeyboardButton(text="Назад", callback_data="back_recipe")
+    InlineKeyboardButton(text=" ⬅️ Назад", callback_data="back_recipe")
 ]
 
 
-btn_back = InlineKeyboardButton(text="Назад", callback_data="btn_back")
+btn_back = InlineKeyboardButton(text=" ⬅️ Назад", callback_data="btn_back")
 
 # Клавиатура
 keyboard_main = InlineKeyboardMarkup(row_width=2).add(*buttons_main)
@@ -125,8 +125,8 @@ def update_message(user_id, message_id, step, text, callback_next, callback_chan
 
     markup = InlineKeyboardMarkup(row_width=2)
     markup.add(
-           InlineKeyboardButton(text="Далее", callback_data=callback_next),
-           InlineKeyboardButton(text="Изменить", callback_data=callback_change)
+           InlineKeyboardButton(text=" ➡️ Далее", callback_data=callback_next),
+           InlineKeyboardButton(text=" ✏️ Изменить", callback_data=callback_change)
        )
 
     bot.edit_message_text(f"{step.capitalize()}: {text}", user_id, message_id, reply_markup=markup)
@@ -136,8 +136,8 @@ def handle_name(message):
     recipe_data[user_id] = {"name": message.text}
     markup = InlineKeyboardMarkup(row_width=2)
     markup.add(
-           InlineKeyboardButton(text="Далее", callback_data="next_ingredients"),
-           InlineKeyboardButton(text="Изменить", callback_data="change_name")
+           InlineKeyboardButton(text=" ➡️ Далее", callback_data="next_ingredients"),
+           InlineKeyboardButton(text=" ✏️ Изменить", callback_data="change_name")
        )
 
     delete_previous_messages(user_id, message.message_id)
@@ -149,8 +149,8 @@ def handle_ingredients(message):
     recipe_data[user_id]["ingredients"] = message.text
     markup = InlineKeyboardMarkup()
     markup.add(
-           InlineKeyboardButton(text="Далее", callback_data="next_instructions"),
-           InlineKeyboardButton(text="Изменить", callback_data="change_ingredients")
+           InlineKeyboardButton(text=" ➡️ Далее", callback_data="next_instructions"),
+           InlineKeyboardButton(text=" ✏️ Изменить", callback_data="change_ingredients")
        )
 
     delete_previous_messages(user_id, message.message_id)
@@ -166,8 +166,8 @@ def handle_instructions(message, step, call_message):
     markup = InlineKeyboardMarkup()
 
     markup.add(
-       InlineKeyboardButton(text="Добавить шаг", callback_data=f"next_step_{step + 1}"),
-       InlineKeyboardButton(text="Закончить", callback_data="finish_recipe")
+       InlineKeyboardButton(text=" ✏️ Добавить шаг", callback_data=f"next_step_{step + 1}"),
+       InlineKeyboardButton(text=" ✅  Закончить", callback_data="finish_recipe")
     )
     
     delete_previous_messages(user_id, message.message_id)
@@ -179,6 +179,7 @@ def handle_instructions(message, step, call_message):
 def get_recipe_user(user_id):
     recipes = SQL_request("SELECT id, recipe_name, ingredients, instructions FROM recipes WHERE user_id = ?", (user_id,))
     return recipes if recipes else []
+
 
 @bot.message_handler(commands=['start'])
 def start(message):
@@ -232,10 +233,10 @@ def callback_query(call):
         instructions = "\n".join(recipe.get("instructions", []))
         markup = InlineKeyboardMarkup(row_width=2)
         markup.add(
-               InlineKeyboardButton(text="Сохранить", callback_data="save_recipe"),
-               InlineKeyboardButton(text="Изменить", callback_data="edit_recipe")
+               InlineKeyboardButton(text=" ✅ Сохранить", callback_data="save_recipe"),
+               InlineKeyboardButton(text=" ✏️ Изменить", callback_data="edit_recipe")
            )
-        markup.add(InlineKeyboardButton(text="Отмена", callback_data="cancel"))
+        markup.add(InlineKeyboardButton(text=" ❌ Отмена", callback_data="cancel"))
         bot.edit_message_text(f"Ваш рецепт:\n\nНазвание: {recipe['name']}\n\nСостав: {ingredients}\n\nОписание приготовления:\n{instructions}", user_id, message_id, reply_markup=markup)
 
     elif call.data == "save_recipe":
@@ -269,44 +270,6 @@ def callback_query(call):
 
     elif call.data == "cancel":
         bot.edit_message_text("Ваши рецепты:", user_id, message_id, reply_markup=keyboard_recipes)
-
-
-
-    if call.data == "create_recipe":
-        user_recipes = get_recipe_user(user_id)
-    
-        if user_recipes:
-            markup = InlineKeyboardMarkup()
-            for recipe in user_recipes:
-                recipe_id = recipe[0]
-                recipe_name = recipe[1]
-                markup.add(InlineKeyboardButton(text=recipe_name, callback_data=f"view_recipe_{recipe_id}"))
-    
-            bot.edit_message_text("Ваши рецепты:", user_id, call.message.message_id, reply_markup=markup)
-        else:
-            bot.edit_message_text("У вас пока нет сохраненных рецептов.", user_id, call.message.message_id)
-
-
-    elif call.data.startswith("view_recipe_"):
-        recipe_id = int(call.data.split("_")[2])
-        recipe = SQL_request("SELECT recipe_name, ingredients, instructions FROM recipes WHERE id = ?", (recipe_id,))
-
-        if recipe:
-            recipe_name, ingredients, instructions = recipe[0]
-            steps = instructions.split('\n')
-            current_steps[user_id] = (recipe_id, 0)
-
-            bot.edit_message_text(chat_id=user_id, message_id=call.message.message_id, text=f"Рецепт: {recipe_name}\n\nИнгредиенты:\n{ingredients}\n\n", reply_markup=InlineKeyboardMarkup().add(
-                    InlineKeyboardButton(text="Назад", callback_data=f"step_prev_{recipe_id}_0"),
-                    InlineKeyboardButton(text="Далее", callback_data=f"step_next_{recipe_id}_1")
-                )
-            )
-        else:
-            bot.edit_message_text(chat_id=user_id, message_id=call.message.message_id, text="Рецепт не найден.")
-
-
-
-
 
 
 
