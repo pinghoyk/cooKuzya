@@ -54,7 +54,7 @@ def init_db():
                 CREATE TABLE IF NOT EXISTS users (
                     id_col INTEGER PRIMARY KEY AUTOINCREMENT,
                     message INTEGER,
-                    user_id INTEGER UNIQUE,  -- Уникальный идентификатор для предотвращения дублирования
+                    user_id INTEGER,
                     username TEXT,
                     first_name TEXT,
                     time_registration TIMESTAMP
@@ -214,7 +214,7 @@ def show_recipes_with_pagination(user_id, call, page=1):
 
         bot.edit_message_text("Ваши рецепты:", user_id, call.message.message_id, reply_markup=markup_recipes)
     else:
-        bot.edit_message_text("У вас нет сохраненных рецептов:(", user_id, call.message.message_id)
+        bot.edit_message_text("У вас нет сохраненных рецептов:(", user_id, call.message.message_id, reply_markup=keyboard_markup)
 
 
 
@@ -225,21 +225,25 @@ def show_recipes_with_pagination(user_id, call, page=1):
 
 @bot.message_handler(commands=['start'])
 def start(message):
-    user_id = message.chat.id
-    username = message.chat.username
-    first_name = message.from_user.first_name
+      user_id = message.chat.id
+      username = message.chat.username
+      first_name = message.from_user.first_name
 
-    user = SQL_request("SELECT * FROM users WHERE user_id = ?", (user_id,))
-    if user is None:
-        SQL_request('INSERT INTO users (user_id, message, username, first_name, time_registration) VALUES (?, ?, ?, ?, ?)',
-                    (user_id, message.message_id, username, first_name, now_time()))
-        bot.send_message(user_id, f"Добро пожаловать {first_name}!", reply_markup=keyboard_main)
-        print(f"{LOG}Зарегистрирован новый пользователь")
-    else:
-        SQL_request("UPDATE users SET message = ? WHERE user_id = ?", (message.message_id, user_id))
-        greeting = get_greeting(first_name)
-        bot.send_message(user_id, greeting, reply_markup=keyboard_main)
-        print(f"{LOG}Пользователь уже существует")
+      # Проверяем, существует ли пользователь в базе данных
+      user = SQL_request("SELECT * FROM users WHERE user_id = ?", (user_id,), fetchone=True)
+      
+      # Если пользователь не найден, регистрируем его
+      if not user:
+          SQL_request('INSERT INTO users (user_id, message, username, first_name, time_registration) VALUES (?, ?, ?, ?, ?)',
+                      (user_id, message.message_id, username, first_name, now_time()))
+          bot.send_message(user_id, f"Добро пожаловать, {first_name}!", reply_markup=keyboard_main)
+          print(f"{LOG} Зарегистрирован новый пользователь")
+      else:
+          # Если пользователь найден, обновляем его данные
+          SQL_request("UPDATE users SET message = ? WHERE user_id = ?", (message.message_id, user_id))
+          greeting = get_greeting(first_name)
+          bot.send_message(user_id, greeting, reply_markup=keyboard_main)
+          print(f"{LOG} Пользователь уже существует")
 
 
 @bot.callback_query_handler(func=lambda call: True)
