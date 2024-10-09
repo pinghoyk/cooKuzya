@@ -333,6 +333,8 @@ def callback_query(call):
             initial_message = bot.edit_message_text("Произошла ошибка сохранения. Пожалуйста, попробуйте снова.\n\nВведите название рецепта:", chat_id=user_id, message_id=message_id, reply_markup=keyboard_markup)
             bot.register_next_step_handler(call.message, handle_name, initial_message.message_id)
 
+    elif call.data == "cancel_recipe":
+        bot.edit_message_text(chat_id=user_id, message_id=message_id, text="Сохранение рецепта отменено.", reply_markup=keyboard_markup)
 
 init_db()  # Инициализируем базу данных
 print(f"{LOG}Бот запущен...")
