@@ -153,6 +153,9 @@ def get_recipe(recipe_id):
 #             navigation_buttons.append(InlineKeyboardButton(text=" ⬅️ Назад", callback_data=f"recipes_page_{page - 1}"))
 #         else:
 #             navigation_buttons.append(InlineKeyboardButton(text=" ⬅️ Назад", callback_data="btn_back"))
+# Функция для обновления сообщения с шагом рецепта и кнопками
+def update_recipe_message(chat_id, message_id, recipe_name, steps, current_step, total_steps, recipe_id):
+    buttons = []
 
 #         if page < total_pages:
 #             navigation_buttons.append(InlineKeyboardButton(text=" ➡️ Вперед", callback_data=f"recipes_page_{page + 1}"))
