@@ -108,20 +108,16 @@ def now_time():
     return datetime.now(pytz.timezone('Asia/Yekaterinburg')).strftime("%Y-%m-%d %H:%M:%S")
 
 
-# Функция для удаления всех предыдущич сообщений
-def delete_previous_messages(user_id, message_id, count=2):
-    for i in range(count):
-        try:
-            bot.delete_message(user_id, message_id - i)
-        except telebot.apihelper.ApiException as e:
-            print(f"Ошибка при удалении сообщения {message_id - i}: {e}")
-        except Exception as e:
-            print(f"Неизвестная ошибка при удалении сообщения {message_id - i}: {e}")
+# # Функция для получения рецептов от конкретного пользователя
+# def get_recipe_user(user_id):
+#     recipes = SQL_request("SELECT id, recipe_name, ingredients, instructions FROM recipes WHERE user_id = ?", (user_id,))
+#     return recipes if recipes else []
 
 
-# Функции для процесса добавления рецепта
-def update_message(user_id, message_id, step, text, callback_next, callback_change):
-    recipe_data[user_id][step] = text
+# # Функция для получения рецептов с пагинацией
+# def show_recipes_with_pagination(user_id, call, page=1):
+#     limit = 5 # на каждой странице максимум 5 рецептов
+#     offset = (page - 1) * limit
 
     markup = InlineKeyboardMarkup(row_width=2)
     markup.add(
