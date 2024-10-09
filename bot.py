@@ -453,6 +453,9 @@ def callback_query(call):
     if call.data == "create_recipe":
         show_recipes_with_pagination(user_id, call, page=1)
 
+    elif call.data.startswith("recipes_page_"):
+        page = int(call.data.split("_")[2])
+        show_recipes_with_pagination(user_id, call, page)
 
 init_db()  # Инициализируем базу данных
 print(f"{LOG}Бот запущен...")
