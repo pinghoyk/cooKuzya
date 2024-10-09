@@ -153,6 +153,17 @@ def now_time():
 def handle_name(message, message_id):
     recipe_name = message.text
     user_id = message.chat.id
+
+    # Попытка удалить сообщение пользователя, если оно существует
+    try:
+        bot.delete_message(chat_id=user_id, message_id=message.message_id)
+    except telebot.apihelper.ApiTelegramException as e:
+        # Игнорируем ошибку, если сообщение не найдено
+        print(f"Ошибка при удалении сообщения: {str(e)}")
+
+    # Сохраняем название рецепта в словаре
+    recipe_data[user_id] = {"name": recipe_name}
+
     markup = InlineKeyboardMarkup()
 
     markup.add(
