@@ -143,11 +143,9 @@ def show_recipes_with_pagination(user_id, call, page=1):
     else:
         bot.edit_message_text("У вас нет сохраненных рецептов:(", user_id, call.message.message_id, reply_markup=keyboard_markup)
 
-#         # Добавляем рецепты текущей страницы в кнопки
-#         for recipe in user_recipes:
-#             recipe_id = recipe[0]
-#             recipe_name = recipe[1]
-#             markup_recipes.add(InlineKeyboardButton(text=recipe_name, callback_data=f"view_recipe_{recipe_id}"))
+# Функция для получения рецепта
+def get_recipe(recipe_id):
+    return SQL_request("SELECT recipe_name, instructions FROM recipes WHERE id = ?", (recipe_id,))
 
 #         # Добавляем кнопки "Назад" и "Вперед" для пагинации
 #         navigation_buttons = []
