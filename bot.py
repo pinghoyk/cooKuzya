@@ -17,7 +17,7 @@ current_steps = {}
 
 # Кнопки
 buttons_main = [
-    InlineKeyboardButton(text="📜 Мои рецепты", callback_data="my_recipe"),
+    InlineKeyboardButton(text=" 📖 Мои рецепты", callback_data="my_recipe"),
     # InlineKeyboardButton(text="🥕 По ингредиентам", callback_data="recipe_ingredients"),
     # InlineKeyboardButton(text="💡 Советы", callback_data="culinary_tips"),
     # InlineKeyboardButton(text="📂 Категории", callback_data="recipe_category"),   
@@ -28,11 +28,11 @@ buttons_main = [
 buttons_recipe = [
     InlineKeyboardButton(text=" ➕ Добавить рецепт", callback_data="add_recipe"),
     InlineKeyboardButton(text=" 🗃 Личные рецепты", callback_data="create_recipe"),
-    InlineKeyboardButton(text=" ⬅️ Назад", callback_data="back_recipe")
+    InlineKeyboardButton(text=" ◀️ Назад", callback_data="back_recipe")
 ]
 
 
-btn_back = InlineKeyboardButton(text=" ⬅️ Назад", callback_data="btn_back")
+btn_back = InlineKeyboardButton(text=" ◀️ Назад", callback_data="btn_back")
 
 # Клавиатура
 keyboard_main = InlineKeyboardMarkup(row_width=2).add(*buttons_main)
