@@ -299,7 +299,6 @@ def callback_query(call):
     first_name = call.message.chat.first_name
 
     if call.data == 'my_recipe':
-        recipe = SQL_request("SELECT recipe_name, ingredients, instructions FROM recipes WHERE user_id = ?", (user_id,))
         bot.edit_message_text("Ваши рецепты:", user_id, message_id, reply_markup=keyboard_recipes)
 
     elif call.data == "add_recipe":
