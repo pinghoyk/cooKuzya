@@ -167,9 +167,21 @@ def handle_name(message, message_id):
     markup = InlineKeyboardMarkup()
     markup.add(InlineKeyboardButton(text=" ✏️ Изменить", callback_data="change_name"))
 
+    new_message_text = f"Название рецепта: {recipe_data[user_id]['name']}\nВведите состав:"
 
-    bot.send_message(user_id, f"Шаг {step}: {message.text}", reply_markup=markup)
+    # Попытка редактирования сообщения
+    try:
+        bot.edit_message_text(
+            new_message_text,
+            chat_id=user_id,
+            message_id=message_id,
+            reply_markup=markup
+        )
+    except telebot.apihelper.ApiTelegramException as e:
+        print(f"Ошибка при редактировании сообщения: {str(e)}")
 
+    # Регистрируем следующий шаг для ввода ингредиентов
+    bot.register_next_step_handler_by_chat_id(user_id, handle_ingredients, message_id)
 
 # Функция для получения рецептов от конкретного пользователя
 def get_recipe_user(user_id):
