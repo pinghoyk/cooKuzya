@@ -480,6 +480,46 @@ def callback_query(call):
             )
         else:
             bot.edit_message_text(chat_id=user_id, message_id=call.message.message_id, text="Рецепт не найден.")
+
+    # Обработка начала рецепта
+    if call.data.startswith("start_recipe_"):
+        recipe_id = int(call.data.split("_")[2])
+        recipe = get_recipe(recipe_id)
+
+        if recipe:
+            recipe_name, instructions = recipe[0]
+            steps = instructions.split('\n')
+            total_steps = len(steps)
+
+            # Отправляем сообщение с первым шагом
+            bot.edit_message_text(
+                chat_id=user_id,
+                message_id=message_id,
+                text=f"{recipe_name}\n\nШаг 1/{total_steps}:\n\n{steps[0]}",
+                reply_markup=InlineKeyboardMarkup().add(
+                    InlineKeyboardButton(text=" ◀️ Назад", callback_data=f"view_recipe_{recipe_id}"),
+                    InlineKeyboardButton(text=" ▶ Далее", callback_data=f"step_next_{recipe_id}_1")
+                )
+            )
+
+    # Обработка переходов по шагам рецепта
+    elif call.data.startswith("step_next_") or call.data.startswith("step_prev_"):
+        recipe_id, current_step = map(int, call.data.split("_")[2:])
+        recipe = get_recipe(recipe_id)
+
+        if recipe:
+            recipe_name, instructions = recipe[0]
+            steps = instructions.split('\n')
+            total_steps = len(steps)
+
+            if 0 <= current_step < total_steps:
+                # Обновляем сообщение с текущим шагом
+                update_recipe_message(user_id, message_id, recipe_name, steps, current_step, total_steps, recipe_id)
+            else:
+                bot.answer_callback_query(call.id, text="Некорректный шаг!")
+
+
+
 init_db()  # Инициализируем базу данных
 print(f"{LOG}Бот запущен...")
 bot.polling(none_stop=True)
