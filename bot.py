@@ -457,6 +457,29 @@ def callback_query(call):
         page = int(call.data.split("_")[2])
         show_recipes_with_pagination(user_id, call, page)
 
+    elif call.data.startswith("view_recipe_"):
+        recipe_id = int(call.data.split("_")[2])
+        recipe = SQL_request("SELECT recipe_name, ingredients, instructions FROM recipes WHERE id = ?", (recipe_id,))
+
+        if recipe:
+            recipe_name, ingredients, instructions = recipe[0]
+            steps = instructions.split('\n')
+            current_steps[user_id] = (recipe_id, 0)  # Начинаем с шага 0
+
+
+            markup = InlineKeyboardMarkup(row_width=2)
+            markup.add(InlineKeyboardButton(text=" 🤍 В избранное", callback_data="favorite"))
+            markup.add(InlineKeyboardButton(text=" 🗑 Удалить", callback_data="delete"))
+
+            markup.add(
+                InlineKeyboardButton(text=" ◀️ Назад", callback_data=f"recipes_page_1"),
+                InlineKeyboardButton(text=" ▶️ Далее", callback_data=f"start_recipe_{recipe_id}")
+                )
+
+            bot.edit_message_text(chat_id=user_id, message_id=call.message.message_id, text=f"Рецепт: {recipe_name}\n\nСостав:\n{ingredients}\n\n", reply_markup=markup
+            )
+        else:
+            bot.edit_message_text(chat_id=user_id, message_id=call.message.message_id, text="Рецепт не найден.")
 init_db()  # Инициализируем базу данных
 print(f"{LOG}Бот запущен...")
 bot.polling(none_stop=True)
