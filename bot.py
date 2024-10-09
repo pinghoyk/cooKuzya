@@ -351,6 +351,90 @@ def callback_query(call):
     elif call.data == "back_recipe":
         greeting = get_greeting(first_name)
         bot.edit_message_text(greeting, chat_id=user_id, message_id=call.message.message_id, reply_markup=keyboard_main)
+
+
+    # if call.data == "create_recipe":
+    #     show_recipes_with_pagination(user_id, call, page=1)
+
+    # elif call.data.startswith("recipes_page_"):
+    #     page = int(call.data.split("_")[2])
+    #     show_recipes_with_pagination(user_id, call, page)
+
+    # elif call.data.startswith("view_recipe_"):
+    #     recipe_id = int(call.data.split("_")[2])
+    #     recipe = SQL_request("SELECT recipe_name, ingredients, instructions FROM recipes WHERE id = ?", (recipe_id,))
+
+    #     if recipe:
+    #         recipe_name, ingredients, instructions = recipe[0]
+    #         steps = instructions.split('\n')
+    #         current_steps[user_id] = (recipe_id, 0)  # Начинаем с шага 0
+
+    #         bot.edit_message_text(chat_id=user_id, message_id=call.message.message_id, text=f"Рецепт: {recipe_name}\n\nИнгредиенты:\n{ingredients}\n\n",
+    #             reply_markup=InlineKeyboardMarkup().add(
+    #                 InlineKeyboardButton(text=" ⬅️ Назад", callback_data=f"recipes_page_1"),  # Возврат на первую страницу рецептов
+    #                 InlineKeyboardButton(text=" ➡️ Далее", callback_data=f"start_recipe_{recipe_id}")  # Переход к шагам
+    #             )
+    #         )
+    #     else:
+    #         bot.edit_message_text(chat_id=user_id, message_id=call.message.message_id, text="Рецепт не найден.")
+
+    # elif call.data.startswith("start_recipe_"):
+    #     recipe_id = int(call.data.split("_")[2])
+    #     recipe = SQL_request("SELECT recipe_name, instructions FROM recipes WHERE id = ?", (recipe_id,))
+
+    #     if recipe:
+    #         recipe_name, instructions = recipe[0]
+    #         steps = instructions.split('\n')
+    #         total_steps = len(steps)
+
+    #         if total_steps == 1:
+    #             # Если шагов всего один, сразу возвращаем к списку рецептов
+    #             bot.edit_message_text(
+    #                 chat_id=call.message.chat.id,
+    #                 message_id=call.message.message_id,
+    #                 text=f"{recipe_name}\n\nШаг 1/1:\n\n{steps[0]}",
+    #                 reply_markup=InlineKeyboardMarkup().add(
+    #                     InlineKeyboardButton(text=" ⬅️ Назад", callback_data="nazad_recipes"),
+    #                     InlineKeyboardButton(text=" ➡️ Далее", callback_data="nazad_recipes")
+    #                 )
+    #             )
+    #         else:
+    #             bot.edit_message_text(
+    #                 chat_id=call.message.chat.id,
+    #                 message_id=call.message.message_id,
+    #                 text=f"{recipe_name}\n\nШаг 1/{total_steps}:\n\n{steps[0]}",
+    #                 reply_markup=InlineKeyboardMarkup().add(
+    #                     InlineKeyboardButton(text="  ⬅️ Назад", callback_data=f"view_recipe_{recipe_id}"),  # Возврат к названию и составу
+    #                     InlineKeyboardButton(text=" ➡️ Далее", callback_data=f"step_next_{recipe_id}_1")
+    #                 )
+    #             )
+
+    # elif call.data.startswith("step_next_") or call.data.startswith("step_prev_"):
+    #     recipe_id, current_step = map(int, call.data.split("_")[2:])
+    #     recipe = SQL_request("SELECT recipe_name, instructions FROM recipes WHERE id = ?", (recipe_id,))
+
+    #     if recipe:
+    #         recipe_name, instructions = recipe[0]
+    #         steps = instructions.split('\n')
+    #         total_steps = len(steps)
+
+    #         if 0 <= current_step < total_steps:
+    #             bot.edit_message_text(
+    #                 chat_id=call.message.chat.id, message_id=call.message.message_id, text=f"{recipe_name}\n\nШаг {current_step + 1}/{total_steps}:\n\n{steps[current_step]}",
+    #                 reply_markup=InlineKeyboardMarkup().add(
+    #                     # Кнопка "Назад": если первый шаг, возвращаем к обзору рецепта
+    #                     InlineKeyboardButton(text=" ⬅️  Назад", callback_data=f"view_recipe_{recipe_id}" if current_step == 0 else f"step_prev_{recipe_id}_{current_step - 1}"),
+    #                     InlineKeyboardButton(text=" ➡️ Далее", callback_data=f"step_next_{recipe_id}_{current_step + 1}" if current_step + 1 < total_steps else "nazad_recipes")
+    #                 )
+    #             )
+    #         else:
+    #             bot.answer_callback_query(call.id, text="Некорректный шаг!")
+
+    # elif call.data == "nazad_recipes":  # Возврат к списку рецептов
+    #     user_recipes = get_recipe_user(user_id)
+    #     show_recipes_with_pagination(user_id, call, page=1)
+
+
 init_db()  # Инициализируем базу данных
 print(f"{LOG}Бот запущен...")
 bot.polling(none_stop=True)
