@@ -165,13 +165,8 @@ def handle_name(message, message_id):
     recipe_data[user_id] = {"name": recipe_name}
 
     markup = InlineKeyboardMarkup()
+    markup.add(InlineKeyboardButton(text=" ✏️ Изменить", callback_data="change_name"))
 
-    markup.add(
-       InlineKeyboardButton(text=" ✏️ Добавить шаг", callback_data=f"next_step_{step + 1}"),
-       InlineKeyboardButton(text=" ✅  Закончить", callback_data="finish_recipe")
-    )
-    
-    delete_previous_messages(user_id, message.message_id)
 
     bot.send_message(user_id, f"Шаг {step}: {message.text}", reply_markup=markup)
 
