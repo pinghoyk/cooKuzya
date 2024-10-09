@@ -389,7 +389,7 @@ def callback_query(call):
 
             markup = InlineKeyboardMarkup(row_width=2)
             markup.add(InlineKeyboardButton(text=" 🤍 В избранное", callback_data="favorite"))
-            markup.add(InlineKeyboardButton(text=" 🗑 Удалить", callback_data="delete"))
+            markup.add(InlineKeyboardButton(text=" 🗑 Удалить", callback_data=f"delete_recipe_{recipe_id}"))
 
             markup.add(
                 InlineKeyboardButton(text=" ◀️ Назад", callback_data=f"recipes_page_1"),
@@ -438,6 +438,27 @@ def callback_query(call):
             else:
                 bot.answer_callback_query(call.id, text="Некорректный шаг!")
 
+    elif call.data.startswith("delete_recipe_"):
+        try:
+            # Получаем ID рецепта
+            recipe_id = int(call.data.split("_")[2])
+
+            # Удаляем рецепт из базы данных
+            SQL_request("DELETE FROM recipes WHERE id = ?", (recipe_id,))
+            
+            # Возвращаем пользователя в меню со списком рецептов
+            markup = show_recipes_with_pagination(call.message.chat.id, call, page=1)
+                
+            # Сообщаем об удалении рецепта и показываем обновленное меню
+            bot.edit_message_text(chat_id=call.message.chat.id, 
+                                  message_id=call.message.message_id, 
+                                  text="Рецепт удален!", 
+                                  reply_markup="create_recipe")
+        except (IndexError, ValueError):
+            # Обрабатываем ошибку, если ID не найден или произошла другая ошибка
+            bot.answer_callback_query(call.id, text="Ошибка удаления рецепта.")
+
+            
 
 
 init_db()  # Инициализируем базу данных
