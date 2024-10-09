@@ -308,7 +308,30 @@ def callback_query(call):
     if call.data == "add_recipe":
         initial_message = bot.edit_message_text("Введите название рецепта:", chat_id=user_id, message_id=message_id, reply_markup=keyboard_markup)
         bot.register_next_step_handler(call.message, handle_name, initial_message.message_id)
+
+
+    elif call.data == "save_recipe":
+        # Проверьте, есть ли данные о рецепте для данного пользователя
+        if user_id in recipe_data:
+            recipe = recipe_data[user_id]
+            
+            # Проверьте, есть ли все необходимые данные
+            if 'name' in recipe and 'ingredients' in recipe and 'steps' in recipe:
+                try:
+                    SQL_request("INSERT INTO recipes (user_id, recipe_name, ingredients, instructions) VALUES (?, ?, ?, ?)",
+                                (user_id, recipe['name'], recipe['ingredients'], "\n".join(recipe['steps'])))
+                    bot.edit_message_text(
+                        chat_id=user_id, 
+                        message_id=message_id, 
+                        text="Рецепт сохранен!",
+                        reply_markup=keyboard_markup
+                        )
+
+                except Exception as e:
+                    bot.send_message(user_id, f"Произошла ошибка при сохранении рецепта: {str(e)}")
         else:
+            initial_message = bot.edit_message_text("Произошла ошибка сохранения. Пожалуйста, попробуйте снова.\n\nВведите название рецепта:", chat_id=user_id, message_id=message_id, reply_markup=keyboard_markup)
+            bot.register_next_step_handler(call.message, handle_name, initial_message.message_id)
 
 
 init_db()  # Инициализируем базу данных
