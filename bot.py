@@ -296,6 +296,7 @@ def callback_query(call):
     print(f"Вызов: {call.data}")
     user_id = call.message.chat.id
     message_id = call.message.message_id
+    first_name = call.message.chat.first_name
 
     if call.data == 'my_recipe':
         recipe = SQL_request("SELECT recipe_name, ingredients, instructions FROM recipes WHERE user_id = ?", (user_id,))
