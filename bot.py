@@ -188,10 +188,11 @@ def handle_ingredients(message, message_id):
     user_id = message.chat.id
     ingredients = message.text
 
-# Функция для получения рецептов с пагинацией
-def show_recipes_with_pagination(user_id, call, page=1):
-    limit = 5 # на каждой странице максимум 5 рецептов
-    offset = (page - 1) * limit
+    # Попытка удалить сообщение пользователя
+    try:
+        bot.delete_message(chat_id=user_id, message_id=message.message_id)
+    except telebot.apihelper.ApiTelegramException as e:
+        print(f"Ошибка при удалении сообщения: {str(e)}")
 
     user_recipes = SQL_request("SELECT id, recipe_name FROM recipes WHERE user_id = ? LIMIT ? OFFSET ?", (user_id, limit, offset))
     
