@@ -108,10 +108,6 @@ def now_time():
     return datetime.now(pytz.timezone('Asia/Yekaterinburg')).strftime("%Y-%m-%d %H:%M:%S")
 
 
-# # Функция для получения рецептов от конкретного пользователя
-# def get_recipe_user(user_id):
-#     recipes = SQL_request("SELECT id, recipe_name, ingredients, instructions FROM recipes WHERE user_id = ?", (user_id,))
-#     return recipes if recipes else []
 
 
 # # Функция для получения рецептов с пагинацией
