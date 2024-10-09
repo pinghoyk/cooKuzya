@@ -147,24 +147,26 @@ def show_recipes_with_pagination(user_id, call, page=1):
 def get_recipe(recipe_id):
     return SQL_request("SELECT recipe_name, instructions FROM recipes WHERE id = ?", (recipe_id,))
 
-#         # Добавляем кнопки "Назад" и "Вперед" для пагинации
-#         navigation_buttons = []
-#         if page > 1:
-#             navigation_buttons.append(InlineKeyboardButton(text=" ⬅️ Назад", callback_data=f"recipes_page_{page - 1}"))
-#         else:
-#             navigation_buttons.append(InlineKeyboardButton(text=" ⬅️ Назад", callback_data="btn_back"))
 # Функция для обновления сообщения с шагом рецепта и кнопками
 def update_recipe_message(chat_id, message_id, recipe_name, steps, current_step, total_steps, recipe_id):
     buttons = []
 
-#         if page < total_pages:
-#             navigation_buttons.append(InlineKeyboardButton(text=" ➡️ Вперед", callback_data=f"recipes_page_{page + 1}"))
+    if current_step == 0:
+        buttons.append(InlineKeyboardButton(text=" ◀️ Назад", callback_data=f"view_recipe_{recipe_id}"))
+    else:
+        buttons.append(InlineKeyboardButton(text=" ◀️ Назад", callback_data=f"step_prev_{recipe_id}_{current_step - 1}"))
 
-#         markup_recipes.row(*navigation_buttons)
+    if current_step + 1 < total_steps:
+        buttons.append(InlineKeyboardButton(text=" ▶ Далее", callback_data=f"step_next_{recipe_id}_{current_step + 1}"))
+    else:
+        buttons.append(InlineKeyboardButton(text="✅ Готово", callback_data="create_recipe"))
 
-#         bot.edit_message_text("Ваши рецепты:", user_id, call.message.message_id, reply_markup=markup_recipes)
-#     else:
-#         bot.edit_message_text("У вас нет сохраненных рецептов:(", user_id, call.message.message_id, reply_markup=keyboard_markup)
+    bot.edit_message_text(
+        chat_id=chat_id,
+        message_id=message_id,
+        text=f"{recipe_name}\n\nШаг {current_step + 1}/{total_steps}:\n\n{steps[current_step]}",
+        reply_markup=InlineKeyboardMarkup().add(*buttons)
+    )
 
 
 def handle_name(message, message_id):
@@ -200,7 +202,6 @@ def handle_name(message, message_id):
     # Регистрируем следующий шаг для ввода ингредиентов
     bot.register_next_step_handler_by_chat_id(user_id, handle_ingredients, message_id)
 
-
 def handle_ingredients(message, message_id):
     user_id = message.chat.id
     ingredients = message.text
@@ -229,7 +230,6 @@ def handle_ingredients(message, message_id):
         print(f"Ошибка при редактировании сообщения: {str(e)}")
 
     bot.register_next_step_handler_by_chat_id(user_id, handle_steps, message_id)
-
 
 def handle_steps(message, message_id):
     user_id = message.chat.id
@@ -311,6 +311,7 @@ def start(message):
 @bot.callback_query_handler(func=lambda call: True)
 def callback_query(call):
     print(f"Вызов: {call.data}")
+
     user_id = call.message.chat.id
     message_id = call.message.message_id
     first_name = call.message.chat.first_name
@@ -320,12 +321,11 @@ def callback_query(call):
 
     elif call.data == "btn_back":
         bot.edit_message_text("Ваши рецепты:", user_id, message_id, reply_markup=keyboard_recipes)
-    
+
 
     if call.data == "add_recipe":
         initial_message = bot.edit_message_text("Введите название рецепта:", chat_id=user_id, message_id=message_id, reply_markup=keyboard_markup)
         bot.register_next_step_handler(call.message, handle_name, initial_message.message_id)
-
 
     elif call.data == "save_recipe":
         # Проверьте, есть ли данные о рецепте для данного пользователя
