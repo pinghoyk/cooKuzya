@@ -194,35 +194,26 @@ def handle_ingredients(message, message_id):
     except telebot.apihelper.ApiTelegramException as e:
         print(f"Ошибка при удалении сообщения: {str(e)}")
 
-    user_recipes = SQL_request("SELECT id, recipe_name FROM recipes WHERE user_id = ? LIMIT ? OFFSET ?", (user_id, limit, offset))
-    
-    total_recipes = SQL_request("SELECT COUNT(*) FROM recipes WHERE user_id = ?", (user_id,))[0][0]  # Всего рецептов
-    total_pages = (total_recipes + limit - 1) // limit 
+    # Сохраняем ингредиенты в словаре
+    recipe_data[user_id]["ingredients"] = ingredients
 
-    if user_recipes:
-        markup_recipes = InlineKeyboardMarkup()
+    markup = InlineKeyboardMarkup()
+    markup.add(InlineKeyboardButton(text=" ✏️ Изменить", callback_data="change_ingredients"))
 
-        # Добавляем рецепты текущей страницы в кнопки
-        for recipe in user_recipes:
-            recipe_id = recipe[0]
-            recipe_name = recipe[1]
-            markup_recipes.add(InlineKeyboardButton(text=recipe_name, callback_data=f"view_recipe_{recipe_id}"))
+    # Попытка редактирования сообщения
+    try:
+        bot.edit_message_text(
+            f"Название рецепта: {recipe_data[user_id]['name']}\nСостав: {recipe_data[user_id]['ingredients']}\nУкажите шаги приготовления, записывая каждый шаг на новой строке:",
+            chat_id=user_id,
+            message_id=message_id,
+            reply_markup=markup
+        )
+    except telebot.apihelper.ApiTelegramException as e:
+        print(f"Ошибка при редактировании сообщения: {str(e)}")
 
-        # Добавляем кнопки "Назад" и "Вперед" для пагинации
-        navigation_buttons = []
-        if page > 1:
-            navigation_buttons.append(InlineKeyboardButton(text=" ⬅️ Назад", callback_data=f"recipes_page_{page - 1}"))
-        else:
-            navigation_buttons.append(InlineKeyboardButton(text=" ⬅️ Назад", callback_data="btn_back"))
+    bot.register_next_step_handler_by_chat_id(user_id, handle_steps, message_id)
 
-        if page < total_pages:
-            navigation_buttons.append(InlineKeyboardButton(text=" ➡️ Вперед", callback_data=f"recipes_page_{page + 1}"))
 
-        markup_recipes.row(*navigation_buttons)
-
-        bot.edit_message_text("Ваши рецепты:", user_id, call.message.message_id, reply_markup=markup_recipes)
-    else:
-        bot.edit_message_text("У вас нет сохраненных рецептов:(", user_id, call.message.message_id, reply_markup=keyboard_markup)
 
 
 
