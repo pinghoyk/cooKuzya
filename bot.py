@@ -108,20 +108,40 @@ def now_time():
     return datetime.now(pytz.timezone('Asia/Yekaterinburg')).strftime("%Y-%m-%d %H:%M:%S")
 
 
+# Функция для получения рецептов с пагинацией
+def show_recipes_with_pagination(user_id, call, page=1):
+    limit = 5
+    offset = (page - 1) * limit
 
-
-# # Функция для получения рецептов с пагинацией
-# def show_recipes_with_pagination(user_id, call, page=1):
-#     limit = 5 # на каждой странице максимум 5 рецептов
-#     offset = (page - 1) * limit
-
-#     user_recipes = SQL_request("SELECT id, recipe_name FROM recipes WHERE user_id = ? LIMIT ? OFFSET ?", (user_id, limit, offset))
+    user_recipes = SQL_request("SELECT id, recipe_name FROM recipes WHERE user_id = ? LIMIT ? OFFSET ?", (user_id, limit, offset))
     
-#     total_recipes = SQL_request("SELECT COUNT(*) FROM recipes WHERE user_id = ?", (user_id,))[0][0]  # Всего рецептов
-#     total_pages = (total_recipes + limit - 1) // limit 
+    total_recipes = SQL_request("SELECT COUNT(*) FROM recipes WHERE user_id = ?", (user_id,))[0][0]  # Всего рецептов
+    total_pages = (total_recipes + limit - 1) // limit 
 
-#     if user_recipes:
-#         markup_recipes = InlineKeyboardMarkup()
+    if user_recipes:
+        markup_recipes = InlineKeyboardMarkup()
+
+        # Добавляем рецепты текущей страницы в кнопки
+        for recipe in user_recipes:
+            recipe_id = recipe[0]
+            recipe_name = recipe[1]
+            markup_recipes.add(InlineKeyboardButton(text=recipe_name, callback_data=f"view_recipe_{recipe_id}"))
+
+        # Добавляем кнопки "Назад" и "Вперед" для пагинации
+        navigation_buttons = []
+        if page > 1:
+            navigation_buttons.append(InlineKeyboardButton(text=" ◀️  Назад", callback_data=f"recipes_page_{page - 1}"))
+        else:
+            navigation_buttons.append(InlineKeyboardButton(text=" ◀️  Назад", callback_data="btn_back"))
+
+        if page < total_pages:
+            navigation_buttons.append(InlineKeyboardButton(text=" ▶️ Вперед", callback_data=f"recipes_page_{page + 1}"))
+
+        markup_recipes.row(*navigation_buttons)
+
+        bot.edit_message_text("Ваши рецепты:", user_id, call.message.message_id, reply_markup=markup_recipes)
+    else:
+        bot.edit_message_text("У вас нет сохраненных рецептов:(", user_id, call.message.message_id, reply_markup=keyboard_markup)
 
 #         # Добавляем рецепты текущей страницы в кнопки
 #         for recipe in user_recipes:
