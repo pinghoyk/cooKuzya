@@ -303,7 +303,11 @@ def callback_query(call):
 
     elif call.data == "btn_back":
         bot.edit_message_text("Ваши рецепты:", user_id, message_id, reply_markup=keyboard_recipes)
+    
 
+    if call.data == "add_recipe":
+        initial_message = bot.edit_message_text("Введите название рецепта:", chat_id=user_id, message_id=message_id, reply_markup=keyboard_markup)
+        bot.register_next_step_handler(call.message, handle_name, initial_message.message_id)
         else:
 
 
