@@ -150,6 +150,8 @@ def now_time():
 #         bot.edit_message_text("У вас нет сохраненных рецептов:(", user_id, call.message.message_id, reply_markup=keyboard_markup)
 
 def handle_instructions(message, step, call_message):
+def handle_name(message, message_id):
+    recipe_name = message.text
     user_id = message.chat.id
     if "instructions" not in recipe_data[user_id]:
         recipe_data[user_id]["instructions"] = []
