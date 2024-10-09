@@ -214,9 +214,55 @@ def handle_ingredients(message, message_id):
     bot.register_next_step_handler_by_chat_id(user_id, handle_steps, message_id)
 
 
+def handle_steps(message, message_id):
+    user_id = message.chat.id
+    steps = message.text
 
+    # Попытка удалить сообщение пользователя
+    try:
+        bot.delete_message(chat_id=user_id, message_id=message.message_id)
+    except telebot.apihelper.ApiTelegramException as e:
+        print(f"Ошибка при удалении сообщения: {str(e)}")
 
+    # Разделяем шаги по новой строке и убираем лишние пробелы
+    steps = steps.strip().split("\n")
+    
+    # Проверяем, что шагов хотя бы два
+    if len(steps) < 2:
+        try:
+            bot.edit_message_text(
+                chat_id=user_id, 
+                message_id=message_id, 
+                text="Пожалуйста, введите хотя бы два шага."
+            )
+        except telebot.apihelper.ApiTelegramException as e:
+            print(f"Ошибка при редактировании сообщения: {str(e)}")
+        
+        bot.register_next_step_handler_by_chat_id(user_id, handle_steps, message_id)  # Повторная регистрация шага
+        return
+    
+    # Сохраняем шаги в словаре
+    recipe_data[user_id]["steps"] = [f"Шаг {i+1}: {step.strip()}" for i, step in enumerate(steps)]
 
+    markup = InlineKeyboardMarkup(row_width=2)
+    markup.add(
+        InlineKeyboardButton(text="✏️ Изменить", callback_data="change_steps")
+    )
+    markup.add(
+        InlineKeyboardButton(text="✅ Сохранить", callback_data="save_recipe"),
+        InlineKeyboardButton(text="❌ Отменить", callback_data="cancel_recipe")
+    )
+
+    # Попытка редактирования сообщения
+    try:
+        bot.edit_message_text(
+            chat_id=user_id, 
+            message_id=message_id,
+            text=f"Рецепт: {recipe_data[user_id]['name']}\n\nСостав:\n{recipe_data[user_id]['ingredients']}\n\nОписание приготовления:\n" + "\n".join(recipe_data[user_id]["steps"]),
+            reply_markup=markup
+        )
+    except telebot.apihelper.ApiTelegramException as e:
+        print(f"Ошибка при редактировании сообщения: {str(e)}")
 
 
 
