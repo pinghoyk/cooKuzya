@@ -92,7 +92,7 @@ def SQL_request(request, params=(), fetchone=False):
 
 # Функция для получения приветствия в зависимости от времени суток
 def get_greeting(first_name):
-    current_hour = datetime.now(pytz.timezone('Europe/Moscow')).hour
+    current_hour = datetime.now(pytz.timezone('Asia/Yekaterinburg')).hour
     if 5 <= current_hour < 12:
         return f"Доброе утро, {first_name}!"
     elif 12 <= current_hour < 18:
@@ -105,7 +105,7 @@ def get_greeting(first_name):
 
 # Функция для получения времени
 def now_time():
-    return datetime.now(pytz.timezone('Europe/Moscow')).strftime("%Y-%m-%d %H:%M:%S")
+    return datetime.now(pytz.timezone('Asia/Yekaterinburg')).strftime("%Y-%m-%d %H:%M:%S")
 
 
 # Функция для удаления всех предыдущич сообщений
