@@ -183,11 +183,10 @@ def handle_name(message, message_id):
     # Регистрируем следующий шаг для ввода ингредиентов
     bot.register_next_step_handler_by_chat_id(user_id, handle_ingredients, message_id)
 
-# Функция для получения рецептов от конкретного пользователя
-def get_recipe_user(user_id):
-    recipes = SQL_request("SELECT id, recipe_name, ingredients, instructions FROM recipes WHERE user_id = ?", (user_id,))
-    return recipes if recipes else []
 
+def handle_ingredients(message, message_id):
+    user_id = message.chat.id
+    ingredients = message.text
 
 # Функция для получения рецептов с пагинацией
 def show_recipes_with_pagination(user_id, call, page=1):
