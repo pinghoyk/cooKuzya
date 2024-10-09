@@ -336,6 +336,21 @@ def callback_query(call):
     elif call.data == "cancel_recipe":
         bot.edit_message_text(chat_id=user_id, message_id=message_id, text="Сохранение рецепта отменено.", reply_markup=keyboard_markup)
 
+    elif call.data == "change_name":
+        bot.edit_message_text(chat_id=user_id, message_id=message_id, text="Введите новое название рецепта:")
+        bot.register_next_step_handler_by_chat_id(user_id, lambda message: handle_name(message, message_id))
+
+    elif call.data == "change_ingredients":
+        bot.edit_message_text(chat_id=user_id, message_id=message_id, text="Введите новый состав рецепта:")
+        bot.register_next_step_handler_by_chat_id(user_id, lambda message: handle_ingredients(message, message_id))
+
+    elif call.data == "change_steps":
+        bot.edit_message_text(chat_id=user_id, message_id=message_id, text="Введите шаги приготовления (по одному на строку):")
+        bot.register_next_step_handler_by_chat_id(user_id, lambda message: handle_steps(message, message_id))
+
+    elif call.data == "back_recipe":
+        greeting = get_greeting(first_name)
+        bot.edit_message_text(greeting, chat_id=user_id, message_id=call.message.message_id, reply_markup=keyboard_main)
 init_db()  # Инициализируем базу данных
 print(f"{LOG}Бот запущен...")
 bot.polling(none_stop=True)
