@@ -14,6 +14,8 @@ LOG = "Логи: "
 recipe_data = {}
 current_steps = {}
 
+recipe_keyboard = None
+
 
 # Кнопки
 buttons_main = [
@@ -110,6 +112,8 @@ def now_time():
 
 # Функция для получения рецептов с пагинацией
 def show_recipes_with_pagination(user_id, call, page=1):
+    global recipe_keyboard  
+
     limit = 5
     offset = (page - 1) * limit
 
@@ -138,6 +142,7 @@ def show_recipes_with_pagination(user_id, call, page=1):
             navigation_buttons.append(InlineKeyboardButton(text=" ▶️ Вперед", callback_data=f"recipes_page_{page + 1}"))
 
         markup_recipes.row(*navigation_buttons)
+        recipe_keyboard = markup_recipes
 
         bot.edit_message_text("Ваши рецепты:", user_id, call.message.message_id, reply_markup=markup_recipes)
     else:
