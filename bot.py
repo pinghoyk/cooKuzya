@@ -191,7 +191,7 @@ def handle_name(message, message_id):
     markup = InlineKeyboardMarkup()
     markup.add(InlineKeyboardButton(text=" ✏️ Изменить", callback_data="change_name"))
 
-    new_message_text = f"Название рецепта: {recipe_data[user_id]['name']}\nВведите состав:"
+    new_message_text = f"Название рецепта: {recipe_data[user_id]['name']}\n\nВведите состав:"
 
     # Попытка редактирования сообщения
     try:
@@ -226,7 +226,7 @@ def handle_ingredients(message, message_id):
     # Попытка редактирования сообщения
     try:
         bot.edit_message_text(
-            f"Название рецепта: {recipe_data[user_id]['name']}\nСостав: {recipe_data[user_id]['ingredients']}\nУкажите шаги приготовления, записывая каждый шаг на новой строке:",
+            f"Название рецепта: {recipe_data[user_id]['name']}\nСостав: {recipe_data[user_id]['ingredients']}\n\nУкажите шаги приготовления, записывая каждый шаг на новой строке:",
             chat_id=user_id,
             message_id=message_id,
             reply_markup=markup
