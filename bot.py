@@ -333,26 +333,29 @@ def callback_query(call):
         bot.register_next_step_handler(call.message, handle_name, initial_message.message_id)
 
     elif call.data == "save_recipe":
-        # Проверьте, есть ли данные о рецепте для данного пользователя
         if user_id in recipe_data:
             recipe = recipe_data[user_id]
             
             # Проверьте, есть ли все необходимые данные
             if 'name' in recipe and 'ingredients' in recipe and 'steps' in recipe:
                 try:
-                    SQL_request("INSERT INTO recipes (user_id, recipe_name, ingredients, instructions) VALUES (?, ?, ?, ?)",
-                                (user_id, recipe['name'], recipe['ingredients'], "\n".join(recipe['steps'])))
-                    bot.edit_message_text(
-                        chat_id=user_id, 
-                        message_id=message_id, 
-                        text="Рецепт сохранен!",
-                        reply_markup=keyboard_markup
-                        )
+                    SQL_request(
+                        "INSERT INTO recipes (user_id, recipe_name, ingredients, instructions) VALUES (?, ?, ?, ?)",
+                        (user_id, recipe['name'], recipe['ingredients'], "\n".join(recipe['steps']))
+                    )
+
+                    bot.edit_message_text(chat_id=user_id, message_id=message_id, text="Рецепт сохранен!")
+
+                    bot.edit_message_text(chat_id=user_id, message_id=message_id, text="Ваши рецепты:", reply_markup=keyboard_recipes)
 
                 except Exception as e:
-                    bot.send_message(user_id, f"Произошла ошибка при сохранении рецепта: {str(e)}")
+                    print(f"Произошла ошибка при сохранении рецепта: {str(e)}")
+            else:
+                # Сообщение, если данные рецепта неполные
+                bot.edit_message_text(chat_id=user_id, message_id=message_id, text="Недостаточно данных для сохранения рецепта.")
         else:
-            initial_message = bot.edit_message_text("Произошла ошибка сохранения. Пожалуйста, попробуйте снова.\n\nВведите название рецепта:", chat_id=user_id, message_id=message_id, reply_markup=keyboard_markup)
+            # Если нет данных о рецепте для пользователя
+            bot.edit_message_text(chat_id=user_id, message_id=message_id, reply_markup=keyboard_markup, text="Произошла ошибка сохранения. Пожалуйста, попробуйте снова.\n\nВведите название рецепта")
             bot.register_next_step_handler(call.message, handle_name, initial_message.message_id)
 
     elif call.data == "cancel_recipe":
