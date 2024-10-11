@@ -321,9 +321,9 @@ def generate_recipes_keyboard(user_recipes, page, total_pages):
 
     navigation_buttons = []
     if page > 1:
-        navigation_buttons.append(InlineKeyboardButton(text=" ◀️  Назад", callback_data=f"recipes_page_{page - 1}"))
+        navigation_buttons.append(InlineKeyboardButton(text="◀️  Назад", callback_data=f"recipes_page_{page - 1}"))
     else:
-        navigation_buttons.append(InlineKeyboardButton(text=" ◀️  Назад", callback_data="btn_back"))
+        navigation_buttons.append(InlineKeyboardButton(text="◀️  Назад", callback_data="btn_back"))
     if page < total_pages:
         navigation_buttons.append(InlineKeyboardButton(text="▶️ Вперед", callback_data=f"recipes_page_{page + 1}"))
 
@@ -425,6 +425,12 @@ def callback_query(call):
             bot.edit_message_text(chat_id=tg_id, message_id=call.message.message_id, text="Рецепт не найден.")
 
 
+    if call.data == "create_recipe":
+        show_recipes_with_pagination(tg_id, call, page=1)
+
+    elif call.data.startswith("recipes_page_"):
+        page = int(call.data.split("_")[2])
+        show_recipes_with_pagination(tg_id, call, page)
     if call.data == "add_recipe":
         initial_message = bot.edit_message_text("Введите название рецепта:", chat_id=user_id, message_id=message_id, reply_markup=keyboard_markup)
         bot.register_next_step_handler(call.message, handle_name, initial_message.message_id)
