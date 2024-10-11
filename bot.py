@@ -149,6 +149,53 @@ def show_recipes_with_pagination(user_id, call, page=1):
     else:
         bot.edit_message_text("У вас нет сохраненных рецептов:(", user_id, call.message.message_id, reply_markup=keyboard_markup)
 
+
+def show_favorites_with_pagination(user_id, call, page=1):
+    global favorite_keyboard  
+
+    limit = 5
+    offset = (page - 1) * limit
+
+    user_favorites = SQL_request("""
+            SELECT f.id, r.id AS recipe_id, r.recipe_name 
+            FROM favorites f 
+            JOIN recipes r ON f.recipe_id = r.id 
+            WHERE f.user_id = ? 
+            LIMIT ? OFFSET ?
+    """, (user_id, limit, offset))
+    
+    total_favorites = SQL_request("SELECT COUNT(*) FROM favorites WHERE user_id = ?", (user_id,))[0][0]
+    total_pages = (total_favorites + limit - 1) // limit 
+
+    if user_favorites:
+        markup_favorites = InlineKeyboardMarkup()
+
+        # Добавляем рецепты текущей страницы в кнопки
+        for favorite in user_favorites:
+            favorite_id = favorite[0]
+            recipe_id = favorite[1]
+            recipe_name = favorite[2]
+            markup_favorites.add(InlineKeyboardButton(text=recipe_name, callback_data=f"view_favorite_recipe_{recipe_id}"))
+
+        navigation_buttons = []
+        if page > 1:
+            navigation_buttons.append(InlineKeyboardButton(text=" ◀️  Назад", callback_data=f"favorites_page_{page - 1}"))
+        else:
+            navigation_buttons.append(InlineKeyboardButton(text=" ◀️  Назад", callback_data="btn_back"))
+
+        if page < total_pages:
+            navigation_buttons.append(InlineKeyboardButton(text=" ▶️ Вперед", callback_data=f"favorites_page_{page + 1}"))
+
+        markup_favorites.row(*navigation_buttons)
+
+        bot.edit_message_text("Ваши избранные рецепты:", user_id, call.message.message_id, reply_markup=markup_favorites)
+    else:
+        bot.edit_message_text("У вас нет избранных рецептов:(", user_id, call.message.message_id, reply_markup=keyboard_markup)
+
+
+
+
+
 # Функция для получения рецепта
 def get_recipe(recipe_id):
     return SQL_request("SELECT recipe_name, instructions FROM recipes WHERE id = ?", (recipe_id,))
