@@ -384,9 +384,9 @@ def start(message):
 def callback_query(call):
     print(f"Вызов: {call.data}")
 
-    user_id = call.message.chat.id
-    message_id = call.message.message_id
-    first_name = call.message.chat.first_name
+    tg_id = call.message.chat.id
+    tg_first_name = call.message.chat.first_name
+    messages_id = call.message.message_id
 
     if call.data == 'my_recipe':
         bot.edit_message_text("Ваши рецепты:", user_id, message_id, reply_markup=keyboard_recipes)
