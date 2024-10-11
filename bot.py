@@ -41,38 +41,58 @@ keyboard_recipes = InlineKeyboardMarkup(row_width=1).add(*buttons_recipe)
 keyboard_markup = InlineKeyboardMarkup().add(btn_back)
 
 
-# ФУНКЦИИ
-# Функция для создания бд
-def init_db():
-    if not os.path.exists(DB_PATH):
-        print(f"{LOG}База данных не найдена, будет создана новая.")
-    try:
-        with sqlite3.connect(DB_PATH) as conn:
-            cursor = conn.cursor()
-            cursor.execute("""
-                CREATE TABLE IF NOT EXISTS users (
-                    id_col INTEGER PRIMARY KEY AUTOINCREMENT,
-                    message INTEGER,
-                    user_id INTEGER,
-                    username TEXT,
-                    first_name TEXT,
-                    time_registration TIMESTAMP
-                )
-            """)
+# ПРОВЕРКА
+if not os.path.exists(DB_NAME):
+    print(f"{LOG}База данных не найдена, создана новая!")
+try:
+    with sqlite3.connect(DB_NAME) as conn:
+        cursor = conn.cursor()
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS users (
+                users_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                messages_id INTEGER,
+                tg_id INTEGER,
+                tg_username TEXT,
+                tg_first_name TEXT,
+                time_registration TIMESTAMP
+            )
+        """)
 
-            cursor.execute("""
-                CREATE TABLE IF NOT EXISTS recipes (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    user_id INTEGER,
-                    recipe_name TEXT,
-                    ingredients TEXT,
-                    instructions TEXT
-                )
-            """)
-            conn.commit()
-        print(f"{LOG}База данных успешно инициализирована!")
-    except sqlite3.Error as e:
-        print(f"{LOG}Ошибка при работе с базой данных: {e}")
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS local_recipes (
+                local_recipes_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                recipe_name TEXT,
+                ingredients TEXT,
+                instructions TEXT,
+                tg_id INTEGER,
+                FOREIGN KEY (tg_id) REFERENCES users (tg_id)
+            )
+        """)
+
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS internet_recipes (
+                internet_recipes_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                url TEXT NOT NULL,
+                tg_id INTEGER,
+                FOREIGN KEY (tg_id) REFERENCES users (tg_id)
+            )
+        """)
+
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS favorite_recipes (
+                favorite_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                tg_id INTEGER,
+                recipe_id INTEGER,
+                recipe_type TEXT,
+                FOREIGN KEY (tg_id) REFERENCES users (tg_id)
+            );
+
+        """)
+        
+        conn.commit()
+    print(f"{LOG}База данных успешно инициализирована!")
+except sqlite3.Error as e:
+    print(f"{LOG}Ошибка при работе с базой данных: {e}")
 
 
 # Функция для подключения к бд
@@ -514,6 +534,5 @@ def callback_query(call):
             
 
 
-init_db()  # Инициализируем базу данных
 print(f"{LOG}Бот запущен...")
 bot.polling(none_stop=True)
