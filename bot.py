@@ -33,14 +33,11 @@ buttons_recipe = [
     InlineKeyboardButton(text=" ◀️ Назад", callback_data="back_recipe")
 ]
 
-
 btn_back = InlineKeyboardButton(text=" ◀️ Назад", callback_data="btn_back")
 
 # Клавиатура
 keyboard_main = InlineKeyboardMarkup(row_width=2).add(*buttons_main)
-
 keyboard_recipes = InlineKeyboardMarkup(row_width=1).add(*buttons_recipe)
-
 keyboard_markup = InlineKeyboardMarkup().add(btn_back)
 
 
