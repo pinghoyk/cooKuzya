@@ -458,6 +458,8 @@ def callback_query(call):
         )
 
         bot.edit_message_reply_markup(chat_id=call.message.chat.id, message_id=call.message.message_id, reply_markup=markup)
+
+
     if call.data == "create_recipe":
         show_recipes_with_pagination(tg_id, call, page=1)
 
@@ -554,57 +556,53 @@ def callback_query(call):
         except (IndexError, ValueError):
             bot.answer_callback_query(call.id, text="Ошибка удаления рецепта.")
 
-
-
-
+    
     if call.data == "add_recipe":
-        initial_message = bot.edit_message_text("Введите название рецепта:", chat_id=user_id, message_id=message_id, reply_markup=keyboard_markup)
+        initial_message = bot.edit_message_text("Введите название рецепта:", chat_id=tg_id, message_id=messages_id, reply_markup=keyboard_markup)
         bot.register_next_step_handler(call.message, handle_name, initial_message.message_id)
 
+    elif call.data == "change_name":
+        bot.edit_message_text(chat_id=tg_id, message_id=messages_id, text="Введите новое название рецепта:")
+        bot.register_next_step_handler_by_chat_id(tg_id, lambda message: handle_name(message, message_id))
+
+    elif call.data == "change_ingredients":
+        bot.edit_message_text(chat_id=tg_id, message_id=messages_id, text="Введите новый состав рецепта:")
+        bot.register_next_step_handler_by_chat_id(tg_id, lambda message: handle_ingredients(message, message_id))
+
+    elif call.data == "change_steps":
+        bot.edit_message_text(chat_id=tg_id, message_id=messages_id, text="Введите шаги приготовления (по одному на строку):")
+        bot.register_next_step_handler_by_chat_id(tg_id, lambda message: handle_steps(message, message_id))
+
+    elif call.data == "cancel_recipe":
+        bot.edit_message_text(chat_id=tg_id, message_id=messages_id, text="Сохранение рецепта отменено.", reply_markup=keyboard_markup)
+
     elif call.data == "save_recipe":
-        if user_id in recipe_data:
-            recipe = recipe_data[user_id]
+        if tg_id in recipe_data:
+            recipe = recipe_data[tg_id]
             
-            # Проверьте, есть ли все необходимые данные
             if 'name' in recipe and 'ingredients' in recipe and 'steps' in recipe:
                 try:
                     SQL_request(
-                        "INSERT INTO recipes (user_id, recipe_name, ingredients, instructions) VALUES (?, ?, ?, ?)",
-                        (user_id, recipe['name'], recipe['ingredients'], "\n".join(recipe['steps']))
+                        "INSERT INTO local_recipes (recipe_name, ingredients, instructions, tg_id) VALUES (?, ?, ?, ?)",
+                        (recipe['name'], recipe['ingredients'], "\n".join(recipe['steps']), tg_id)
                     )
 
-                    bot.edit_message_text(chat_id=user_id, message_id=message_id, text="Рецепт сохранен!")
-
-                    bot.edit_message_text(chat_id=user_id, message_id=message_id, text="Ваши рецепты:", reply_markup=keyboard_recipes)
+                    bot.edit_message_text(chat_id=tg_id, message_id=messages_id, text="Рецепт сохранен!")
+                    bot.edit_message_text(chat_id=tg_id, message_id=messages_id, text="Ваши рецепты:", reply_markup=keyboard_recipes)
 
                 except Exception as e:
                     print(f"Произошла ошибка при сохранении рецепта: {str(e)}")
             else:
                 # Сообщение, если данные рецепта неполные
-                bot.edit_message_text(chat_id=user_id, message_id=message_id, text="Недостаточно данных для сохранения рецепта.")
+                bot.edit_message_text(chat_id=tg_id, message_id=messages_id, text="Недостаточно данных для сохранения рецепта.")
         else:
-            # Если нет данных о рецепте для пользователя
-            bot.edit_message_text(chat_id=user_id, message_id=message_id, reply_markup=keyboard_markup, text="Произошла ошибка сохранения. Пожалуйста, попробуйте снова.\n\nВведите название рецепта")
+            bot.edit_message_text(chat_id=tg_id, message_id=messages_id, reply_markup=keyboard_markup, text="Произошла ошибка сохранения. Пожалуйста, попробуйте снова.\n\nВведите название рецепта")
             bot.register_next_step_handler(call.message, handle_name, initial_message.message_id)
 
-    elif call.data == "cancel_recipe":
-        bot.edit_message_text(chat_id=user_id, message_id=message_id, text="Сохранение рецепта отменено.", reply_markup=keyboard_markup)
 
-    elif call.data == "change_name":
-        bot.edit_message_text(chat_id=user_id, message_id=message_id, text="Введите новое название рецепта:")
-        bot.register_next_step_handler_by_chat_id(user_id, lambda message: handle_name(message, message_id))
-
-    elif call.data == "change_ingredients":
-        bot.edit_message_text(chat_id=user_id, message_id=message_id, text="Введите новый состав рецепта:")
-        bot.register_next_step_handler_by_chat_id(user_id, lambda message: handle_ingredients(message, message_id))
-
-    elif call.data == "change_steps":
-        bot.edit_message_text(chat_id=user_id, message_id=message_id, text="Введите шаги приготовления (по одному на строку):")
-        bot.register_next_step_handler_by_chat_id(user_id, lambda message: handle_steps(message, message_id))
-
-    elif call.data == "back_recipe":
-        greeting = get_greeting(first_name)
-        bot.edit_message_text(greeting, chat_id=user_id, message_id=call.message.message_id, reply_markup=keyboard_main)
+    if call.data == "back_recipe":
+        greeting = get_greeting(tg_first_name)
+        bot.edit_message_text(greeting, chat_id=tg_id, message_id=call.message.message_id, reply_markup=keyboard_main)
 
 
 
@@ -619,8 +617,6 @@ def callback_query(call):
 
 
 
-
-            
 
 
 print(f"{LOG}Бот запущен...")
