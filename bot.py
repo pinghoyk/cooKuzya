@@ -424,6 +424,22 @@ def callback_query(call):
         else:
             bot.edit_message_text(chat_id=tg_id, message_id=call.message.message_id, text="Рецепт не найден.")
 
+    elif call.data.startswith("add_favorite_"):
+        recipe_id = int(call.data.split("_")[2])
+        tg_id = call.from_user.id
+
+        SQL_request("INSERT INTO favorite_recipes (tg_id, recipe_id, recipe_type) VALUES (?, ?, ?)", (tg_id, recipe_id, 'local'))
+
+        markup = InlineKeyboardMarkup(row_width=2)
+        markup.add(InlineKeyboardButton(text="❤️ В избранном", callback_data=f"remove_favorite_{recipe_id}"))
+
+        markup.add(InlineKeyboardButton(text="🗑 Удалить", callback_data=f"delete_recipe_{recipe_id}"))
+        markup.add(
+            InlineKeyboardButton(text="◀️ Назад", callback_data="recipes_page_1"),
+            InlineKeyboardButton(text="▶️ Далее", callback_data=f"start_recipe_{recipe_id}")
+        )
+
+        bot.edit_message_reply_markup(chat_id=call.message.chat.id, message_id=call.message.message_id, reply_markup=markup)
 
     if call.data == "create_recipe":
         show_recipes_with_pagination(tg_id, call, page=1)
