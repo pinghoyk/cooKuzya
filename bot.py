@@ -501,6 +501,62 @@ def callback_query(call):
             bot.edit_message_text(chat_id=tg_id, message_id=call.message.message_id, text=f"Рецепт: {recipe_name}\n\nСостав:\n{ingredients}\n\n", reply_markup=markup)
         else:
             bot.edit_message_text(chat_id=tg_id, message_id=call.message.message_id, text="Рецепт не найден.")
+
+
+    elif call.data.startswith("start_recipe_"):
+        recipe_id = int(call.data.split("_")[2])
+        recipe = get_recipe(recipe_id)
+
+        if recipe:
+            recipe_name, instructions = recipe[0]
+            steps = instructions.split('\n')
+            total_steps = len(steps)
+
+            bot.edit_message_text(
+                chat_id=tg_id,
+                message_id=messages_id,
+                text=f"{recipe_name}\n\nШаг 1/{total_steps}:\n\n{steps[0]}",
+                reply_markup=InlineKeyboardMarkup().add(
+                    InlineKeyboardButton(text="◀️ Назад", callback_data=f"view_local_recipe_{recipe_id}"),
+                    InlineKeyboardButton(text="▶ Далее", callback_data=f"step_next_{recipe_id}_1")
+                )
+            )
+
+    elif call.data.startswith("step_next_") or call.data.startswith("step_prev_"):
+        recipe_id, current_step = map(int, call.data.split("_")[2:])
+        recipe = get_recipe(recipe_id)
+
+        if recipe:
+            recipe_name, instructions = recipe[0]
+            steps = instructions.split('\n')
+            total_steps = len(steps)
+
+            if 0 <= current_step < total_steps:
+                update_recipe_message(tg_id, messages_id, recipe_name, steps, current_step, total_steps, recipe_id)
+            else:
+                bot.answer_callback_query(call.id, text="Некорректный шаг!")
+
+    elif call.data.startswith("delete_recipe_"):
+        try:
+            recipe_id = int(call.data.split("_")[2])
+            SQL_request("DELETE FROM local_recipes WHERE local_recipes_id = ?", (recipe_id,))
+
+            bot.edit_message_text(chat_id=tg_id, message_id=messages_id, text="Рецепт удален!")
+
+            # Проверяем, остались ли еще рецепты у пользователя
+            remaining_recipes = SQL_request("SELECT COUNT(*) FROM local_recipes WHERE tg_id = ?", (tg_id,))[0][0]
+
+            if remaining_recipes > 0:
+                show_recipes_with_pagination(tg_id, call)
+            else:
+                bot.edit_message_text(chat_id=tg_id, message_id=messages_id, text="У вас нет сохраненных рецептов :(", reply_markup=keyboard_markup)
+
+        except (IndexError, ValueError):
+            bot.answer_callback_query(call.id, text="Ошибка удаления рецепта.")
+
+
+
+
     if call.data == "add_recipe":
         initial_message = bot.edit_message_text("Введите название рецепта:", chat_id=user_id, message_id=message_id, reply_markup=keyboard_markup)
         bot.register_next_step_handler(call.message, handle_name, initial_message.message_id)
@@ -551,93 +607,17 @@ def callback_query(call):
         bot.edit_message_text(greeting, chat_id=user_id, message_id=call.message.message_id, reply_markup=keyboard_main)
 
 
-    if call.data == "create_recipe":
-        show_recipes_with_pagination(user_id, call, page=1)
-
-    elif call.data.startswith("recipes_page_"):
-        page = int(call.data.split("_")[2])
-        show_recipes_with_pagination(user_id, call, page)
-
-    elif call.data.startswith("view_recipe_"):
-        recipe_id = int(call.data.split("_")[2])
-        recipe = SQL_request("SELECT recipe_name, ingredients, instructions FROM recipes WHERE id = ?", (recipe_id,))
-
-        if recipe:
-            recipe_name, ingredients, instructions = recipe[0]
-            steps = instructions.split('\n')
-            current_steps[user_id] = (recipe_id, 0)  # Начинаем с шага 0
 
 
-            markup = InlineKeyboardMarkup(row_width=2)
-            markup.add(InlineKeyboardButton(text=" 🤍 В избранное", callback_data="favorite"))
-            markup.add(InlineKeyboardButton(text=" 🗑 Удалить", callback_data=f"delete_recipe_{recipe_id}"))
-
-            markup.add(
-                InlineKeyboardButton(text=" ◀️ Назад", callback_data=f"recipes_page_1"),
-                InlineKeyboardButton(text=" ▶️ Далее", callback_data=f"start_recipe_{recipe_id}")
-                )
-
-            bot.edit_message_text(chat_id=user_id, message_id=call.message.message_id, text=f"Рецепт: {recipe_name}\n\nСостав:\n{ingredients}\n\n", reply_markup=markup
-            )
-        else:
-            bot.edit_message_text(chat_id=user_id, message_id=call.message.message_id, text="Рецепт не найден.")
-
-    # Обработка начала рецепта
-    if call.data.startswith("start_recipe_"):
-        recipe_id = int(call.data.split("_")[2])
-        recipe = get_recipe(recipe_id)
-
-        if recipe:
-            recipe_name, instructions = recipe[0]
-            steps = instructions.split('\n')
-            total_steps = len(steps)
-
-            # Отправляем сообщение с первым шагом
-            bot.edit_message_text(
-                chat_id=user_id,
-                message_id=message_id,
-                text=f"{recipe_name}\n\nШаг 1/{total_steps}:\n\n{steps[0]}",
-                reply_markup=InlineKeyboardMarkup().add(
-                    InlineKeyboardButton(text=" ◀️ Назад", callback_data=f"view_recipe_{recipe_id}"),
-                    InlineKeyboardButton(text=" ▶ Далее", callback_data=f"step_next_{recipe_id}_1")
-                )
-            )
-
-    # Обработка переходов по шагам рецепта
-    elif call.data.startswith("step_next_") or call.data.startswith("step_prev_"):
-        recipe_id, current_step = map(int, call.data.split("_")[2:])
-        recipe = get_recipe(recipe_id)
-
-        if recipe:
-            recipe_name, instructions = recipe[0]
-            steps = instructions.split('\n')
-            total_steps = len(steps)
-
-            if 0 <= current_step < total_steps:
-                # Обновляем сообщение с текущим шагом
-                update_recipe_message(user_id, message_id, recipe_name, steps, current_step, total_steps, recipe_id)
-            else:
-                bot.answer_callback_query(call.id, text="Некорректный шаг!")
 
 
-    elif call.data.startswith("delete_recipe_"):
-        try:
-            recipe_id = int(call.data.split("_")[2])
-            SQL_request("DELETE FROM recipes WHERE id = ?", (recipe_id,))
 
-            bot.edit_message_text(chat_id=user_id, message_id=message_id, text="Рецепт удален!")
 
-            # Проверяем, остались ли еще рецепты у пользователя
-            remaining_recipes = SQL_request("SELECT COUNT(*) FROM recipes WHERE user_id = ?", (user_id,))[0][0]
 
-            if remaining_recipes > 0:
-                show_recipes_with_pagination(user_id, call)
-            else:
-                bot.edit_message_text(chat_id=user_id, message_id=message_id, text="У вас нет сохраненных рецептов :(", reply_markup=keyboard_markup)
 
-        except (IndexError, ValueError):
-            # Обрабатываем ошибку, если ID не найден или произошла другая ошибка
-            bot.answer_callback_query(call.id, text="Ошибка удаления рецепта.")
+
+
+
 
 
             
