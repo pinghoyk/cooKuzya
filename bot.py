@@ -334,30 +334,23 @@ def generate_recipes_keyboard(user_recipes, page, total_pages):
     return markup_recipes
 
 
-
-
-
-
-
-
-
 # Функция для получения рецепта
 def get_recipe(recipe_id):
     return SQL_request("SELECT recipe_name, instructions FROM recipes WHERE id = ?", (recipe_id,))
 
 # Функция для обновления сообщения с шагом рецепта и кнопками
-def update_recipe_message(chat_id, message_id, recipe_name, steps, current_step, total_steps, recipe_id):
+def update_recipe_message(chat_id, message_id, recipe_name, steps, current_step, total_steps, recipe_id, is_favorite=False):
     buttons = []
 
     if current_step == 0:
-        buttons.append(InlineKeyboardButton(text=" ◀️ Назад", callback_data=f"view_recipe_{recipe_id}"))
+        buttons.append(InlineKeyboardButton(text="◀️ Назад", callback_data=f"view_recipe_{recipe_id}"))
     else:
-        buttons.append(InlineKeyboardButton(text=" ◀️ Назад", callback_data=f"step_prev_{recipe_id}_{current_step - 1}"))
+        buttons.append(InlineKeyboardButton(text="◀️ Назад", callback_data=f"step_prev_{recipe_id}_{current_step - 1}"))
 
     if current_step + 1 < total_steps:
-        buttons.append(InlineKeyboardButton(text=" ▶ Далее", callback_data=f"step_next_{recipe_id}_{current_step + 1}"))
+        buttons.append(InlineKeyboardButton(text="▶ Далее", callback_data=f"step_next_{recipe_id}_{current_step + 1}"))
     else:
-        buttons.append(InlineKeyboardButton(text="✅ Готово", callback_data="create_recipe"))
+        buttons.append(InlineKeyboardButton(text="✅ Готово", callback_data="favorite_recipe" if is_favorite else "create_recipe"))
 
     bot.edit_message_text(
         chat_id=chat_id,
@@ -367,32 +360,24 @@ def update_recipe_message(chat_id, message_id, recipe_name, steps, current_step,
     )
 
 
-
-
-
-
-
 @bot.message_handler(commands=['start'])
 def start(message):
-      user_id = message.chat.id
-      username = message.chat.username
-      first_name = message.from_user.first_name
+    tg_id = message.chat.id
+    tg_username = message.chat.username
+    tg_first_name = message.from_user.first_name
 
-      # Проверяем, существует ли пользователь в базе данных
-      user = SQL_request("SELECT * FROM users WHERE user_id = ?", (user_id,), fetchone=True)
-      
-      # Если пользователь не найден, регистрируем его
-      if not user:
-          SQL_request('INSERT INTO users (user_id, message, username, first_name, time_registration) VALUES (?, ?, ?, ?, ?)',
-                      (user_id, message.message_id, username, first_name, now_time()))
-          bot.send_message(user_id, f"Добро пожаловать, {first_name}!", reply_markup=keyboard_main)
-          print(f"{LOG} Зарегистрирован новый пользователь")
-      else:
-          # Если пользователь найден, обновляем его данные
-          SQL_request("UPDATE users SET message = ? WHERE user_id = ?", (message.message_id, user_id))
-          greeting = get_greeting(first_name)
-          bot.send_message(user_id, greeting, reply_markup=keyboard_main)
-          print(f"{LOG} Пользователь уже существует")
+    user = SQL_request("SELECT * FROM users WHERE tg_id = ?", (tg_id,), fetchone=True)
+    
+    if not user:
+        SQL_request('INSERT INTO users (messages_id, tg_id, tg_username, tg_first_name, time_registration) VALUES (?, ?, ?, ?, ?)',
+                    (message.message_id, tg_id, tg_username, tg_first_name, now_time()))
+        bot.send_message(tg_id, f"Добро пожаловать, {tg_first_name}!", reply_markup=keyboard_main)
+        print(f"{LOG} Зарегистрирован новый пользователь")
+    else:
+        SQL_request("UPDATE users SET messages_id = ? WHERE tg_id = ?", (message.message_id, tg_id))
+        greeting = get_greeting(tg_first_name)
+        bot.send_message(tg_id, greeting, reply_markup=keyboard_main)
+        print(f"{LOG} Пользователь уже существует")
 
 
 @bot.callback_query_handler(func=lambda call: True)
