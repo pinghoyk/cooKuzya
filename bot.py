@@ -292,51 +292,50 @@ def generate_favorites_keyboard(user_favorites, page, total_pages):
     return markup_favorites
 
 
-
-
-
-
-def show_favorites_with_pagination(user_id, call, page=1):
-    global favorite_keyboard  
-
+# Показываем список личных рецептов из бд
+def show_recipes_with_pagination(tg_id, call, page=1):
     limit = 5
     offset = (page - 1) * limit
 
-    user_favorites = SQL_request("""
-            SELECT f.id, r.id AS recipe_id, r.recipe_name 
-            FROM favorites f 
-            JOIN recipes r ON f.recipe_id = r.id 
-            WHERE f.user_id = ? 
-            LIMIT ? OFFSET ?
-    """, (user_id, limit, offset))
-    
-    total_favorites = SQL_request("SELECT COUNT(*) FROM favorites WHERE user_id = ?", (user_id,))[0][0]
-    total_pages = (total_favorites + limit - 1) // limit 
+    # Получаем рецепты пользователя из базы данных
+    user_recipes = SQL_request("SELECT local_recipes_id, recipe_name FROM local_recipes WHERE tg_id = ? LIMIT ? OFFSET ?", (tg_id, limit, offset))
 
-    if user_favorites:
-        markup_favorites = InlineKeyboardMarkup()
+    # Получаем общее количество рецептов для данного пользователя
+    total_recipes = SQL_request("SELECT COUNT(*) FROM local_recipes WHERE tg_id = ?", (tg_id,))[0][0]
 
-        # Добавляем рецепты текущей страницы в кнопки
-        for favorite in user_favorites:
-            favorite_id = favorite[0]
-            recipe_id = favorite[1]
-            recipe_name = favorite[2]
-            markup_favorites.add(InlineKeyboardButton(text=recipe_name, callback_data=f"view_favorite_recipe_{recipe_id}"))
+    total_pages = (total_recipes + limit - 1) // limit
 
-        navigation_buttons = []
-        if page > 1:
-            navigation_buttons.append(InlineKeyboardButton(text=" ◀️  Назад", callback_data=f"favorites_page_{page - 1}"))
-        else:
-            navigation_buttons.append(InlineKeyboardButton(text=" ◀️  Назад", callback_data="btn_back"))
-
-        if page < total_pages:
-            navigation_buttons.append(InlineKeyboardButton(text=" ▶️ Вперед", callback_data=f"favorites_page_{page + 1}"))
-
-        markup_favorites.row(*navigation_buttons)
-
-        bot.edit_message_text("Ваши избранные рецепты:", user_id, call.message.message_id, reply_markup=markup_favorites)
+    if user_recipes:
+        markup_recipes = generate_recipes_keyboard(user_recipes, page, total_pages)
+        bot.edit_message_text("Ваши рецепты:", tg_id, call.message.message_id, reply_markup=markup_recipes)
     else:
-        bot.edit_message_text("У вас нет избранных рецептов:(", user_id, call.message.message_id, reply_markup=keyboard_markup)
+        bot.edit_message_text("У вас нет рецептов :(", tg_id, call.message.message_id, reply_markup=keyboard_markup)
+
+def generate_recipes_keyboard(user_recipes, page, total_pages):
+    markup_recipes = InlineKeyboardMarkup()
+
+    for recipe in user_recipes:
+        recipe_id = recipe[0]
+        recipe_name = recipe[1]
+        markup_recipes.add(InlineKeyboardButton(text=recipe_name, callback_data=f"view_local_recipe_{recipe_id}"))
+
+    navigation_buttons = []
+    if page > 1:
+        navigation_buttons.append(InlineKeyboardButton(text=" ◀️  Назад", callback_data=f"recipes_page_{page - 1}"))
+    else:
+        navigation_buttons.append(InlineKeyboardButton(text=" ◀️  Назад", callback_data="btn_back"))
+    if page < total_pages:
+        navigation_buttons.append(InlineKeyboardButton(text="▶️ Вперед", callback_data=f"recipes_page_{page + 1}"))
+
+
+    if navigation_buttons:
+        markup_recipes.row(*navigation_buttons)
+
+    return markup_recipes
+
+
+
+
 
 
 
