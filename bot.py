@@ -389,10 +389,40 @@ def callback_query(call):
     messages_id = call.message.message_id
 
     if call.data == 'my_recipe':
-        bot.edit_message_text("Ваши рецепты:", user_id, message_id, reply_markup=keyboard_recipes)
+        bot.edit_message_text("Ваши рецепты:", tg_id, messages_id, reply_markup=keyboard_recipes)
 
     elif call.data == "btn_back":
-        bot.edit_message_text("Ваши рецепты:", user_id, message_id, reply_markup=keyboard_recipes)
+        bot.edit_message_text("Ваши рецепты:", tg_id, messages_id, reply_markup=keyboard_recipes)
+
+
+    if call.data == "favorite_recipe":
+        show_favorites_with_pagination(tg_id, call, page=1)
+
+    elif call.data.startswith("view_favorite_recipe_"):
+        recipe_id = int(call.data.split("_")[3])
+        tg_id = call.from_user.id
+
+        recipe = SQL_request("SELECT recipe_name, ingredients, instructions FROM local_recipes WHERE local_recipes_id = ?", (recipe_id,))
+        is_favorite = SQL_request("SELECT COUNT(*) FROM favorite_recipes WHERE tg_id = ? AND recipe_id = ?", (tg_id, recipe_id))[0][0]  # Проверка, в избранном ли рецепт
+
+        if recipe:
+            recipe_name, ingredients, instructions = recipe[0]
+            steps = instructions.split('\n')
+            current_steps[tg_id] = (recipe_id, 0)  # Начинаем с шага 0
+
+            markup = InlineKeyboardMarkup(row_width=2)
+
+            markup.add(InlineKeyboardButton(text="❤️ В избранном", callback_data=f"remove_favorite_{recipe_id}"))
+
+            markup.add(
+                InlineKeyboardButton(text="◀️ Назад", callback_data="view_favorites"),
+                InlineKeyboardButton(text="▶️ Вперед", callback_data=f"start_recipe_{recipe_id}")
+            )
+
+
+            bot.edit_message_text(chat_id=tg_id, message_id=call.message.message_id, text=f"Рецепт: {recipe_name}\n\nСостав:\n{ingredients}\n\n", reply_markup=markup)
+        else:
+            bot.edit_message_text(chat_id=tg_id, message_id=call.message.message_id, text="Рецепт не найден.")
 
 
     if call.data == "add_recipe":
