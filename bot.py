@@ -9,12 +9,11 @@ import os
 bot = telebot.TeleBot(config.API)
 
 # Глобальные переменные
-DB_PATH = "cook.db"
+DB_NAME = "cook.db"
 LOG = "Логи: "
+
 recipe_data = {}
 current_steps = {}
-
-recipe_keyboard = None
 
 
 # Кнопки
