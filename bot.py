@@ -441,6 +441,23 @@ def callback_query(call):
 
         bot.edit_message_reply_markup(chat_id=call.message.chat.id, message_id=call.message.message_id, reply_markup=markup)
 
+    elif call.data.startswith("remove_favorite_"):
+        recipe_id = int(call.data.split("_")[2])
+        tg_id = call.from_user.id
+
+        SQL_request("DELETE FROM favorite_recipes WHERE tg_id = ? AND recipe_id = ?", (tg_id, recipe_id))
+
+        markup = InlineKeyboardMarkup(row_width=2)
+        markup.add(InlineKeyboardButton(text="🤍 В избранное", callback_data=f"add_favorite_{recipe_id}"))
+
+        # Восстанавливаем остальные кнопки
+        markup.add(InlineKeyboardButton(text="🗑 Удалить", callback_data=f"delete_recipe_{recipe_id}"))
+        markup.add(
+            InlineKeyboardButton(text="◀️ Назад", callback_data="recipes_page_1"),
+            InlineKeyboardButton(text="▶️ Далее", callback_data=f"start_recipe_{recipe_id}")
+        )
+
+        bot.edit_message_reply_markup(chat_id=call.message.chat.id, message_id=call.message.message_id, reply_markup=markup)
     if call.data == "create_recipe":
         show_recipes_with_pagination(tg_id, call, page=1)
 
