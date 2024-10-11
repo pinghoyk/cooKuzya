@@ -431,6 +431,43 @@ def callback_query(call):
     elif call.data.startswith("recipes_page_"):
         page = int(call.data.split("_")[2])
         show_recipes_with_pagination(tg_id, call, page)
+
+    elif call.data.startswith("view_local_recipe_"):
+        recipe_id = int(call.data.split("_")[3])
+        # Запрос рецепта из базы данных
+        recipe = SQL_request("SELECT recipe_name, ingredients, instructions FROM local_recipes WHERE local_recipes_id = ?", (recipe_id,))
+        is_favorite = SQL_request("SELECT COUNT(*) FROM favorite_recipes WHERE tg_id = ? AND recipe_id = ?", (tg_id, recipe_id))[0][0]  # Проверка, есть ли рецепт в избранном
+
+        if recipe:
+            recipe_name, ingredients, instructions = recipe[0]
+            steps = instructions.split('\n')
+            current_steps[tg_id] = (recipe_id, 0)  # Начинаем с шага 0
+
+            # Формируем клавиатуру
+            markup = InlineKeyboardMarkup(row_width=2)
+
+            # Проверка, добавлен ли рецепт в избранное
+            if is_favorite:
+                favorite_button_text = "💔 Убрать из избранного"
+                favorite_callback_data = f"remove_favorite_{recipe_id}"
+            else:
+                favorite_button_text = "🤍 В избранное"
+                favorite_callback_data = f"add_favorite_{recipe_id}"
+
+            markup.add(InlineKeyboardButton(text=favorite_button_text, callback_data=favorite_callback_data))
+
+            # Добавляем кнопку "Удалить" только для личных рецептов
+            if not call.data.startswith("view_favorites_"):
+                markup.add(InlineKeyboardButton(text="🗑 Удалить", callback_data=f"delete_recipe_{recipe_id}"))
+
+            markup.add(
+                InlineKeyboardButton(text="◀️ Назад", callback_data="recipes_page_1"),
+                InlineKeyboardButton(text="▶️ Далее", callback_data=f"start_recipe_{recipe_id}")
+            )
+
+            bot.edit_message_text(chat_id=tg_id, message_id=call.message.message_id, text=f"Рецепт: {recipe_name}\n\nСостав:\n{ingredients}\n\n", reply_markup=markup)
+        else:
+            bot.edit_message_text(chat_id=tg_id, message_id=call.message.message_id, text="Рецепт не найден.")
     if call.data == "add_recipe":
         initial_message = bot.edit_message_text("Введите название рецепта:", chat_id=user_id, message_id=message_id, reply_markup=keyboard_markup)
         bot.register_next_step_handler(call.message, handle_name, initial_message.message_id)
