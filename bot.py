@@ -541,22 +541,27 @@ def callback_query(call):
     elif call.data.startswith("delete_recipe_"):
         try:
             recipe_id = int(call.data.split("_")[2])
+
             SQL_request("DELETE FROM local_recipes WHERE local_recipes_id = ?", (recipe_id,))
 
-            bot.edit_message_text(chat_id=tg_id, message_id=messages_id, text="Рецепт удален!")
+            SQL_request("DELETE FROM favorite_recipes WHERE recipe_id = ? AND tg_id = ?", (recipe_id, tg_id))
+
+            bot.edit_message_text(chat_id=tg_id, message_id=messages_id, text="Рецепт успешно удален!")
 
             # Проверяем, остались ли еще рецепты у пользователя
             remaining_recipes = SQL_request("SELECT COUNT(*) FROM local_recipes WHERE tg_id = ?", (tg_id,))[0][0]
 
             if remaining_recipes > 0:
+                # Если есть еще рецепты, показываем их с пагинацией
                 show_recipes_with_pagination(tg_id, call)
             else:
+                # Если рецептов больше нет
                 bot.edit_message_text(chat_id=tg_id, message_id=messages_id, text="У вас нет сохраненных рецептов :(", reply_markup=keyboard_markup)
 
         except (IndexError, ValueError):
             bot.answer_callback_query(call.id, text="Ошибка удаления рецепта.")
 
-    
+
     if call.data == "add_recipe":
         initial_message = bot.edit_message_text("Введите название рецепта:", chat_id=tg_id, message_id=messages_id, reply_markup=keyboard_markup)
         bot.register_next_step_handler(call.message, handle_name, initial_message.message_id)
@@ -603,20 +608,6 @@ def callback_query(call):
     if call.data == "back_recipe":
         greeting = get_greeting(tg_first_name)
         bot.edit_message_text(greeting, chat_id=tg_id, message_id=call.message.message_id, reply_markup=keyboard_main)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 print(f"{LOG}Бот запущен...")
