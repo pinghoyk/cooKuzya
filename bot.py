@@ -459,7 +459,6 @@ def callback_query(call):
         else:
             bot.edit_message_text(chat_id=tg_id, message_id=call.message.message_id, text="У вас нет избранных рецептов.")
 
-
     elif call.data.startswith("add_favorite_"):
         recipe_id = int(call.data.split("_")[2])
         tg_id = call.from_user.id
@@ -478,22 +477,20 @@ def callback_query(call):
         bot.edit_message_reply_markup(chat_id=call.message.chat.id, message_id=call.message.message_id, reply_markup=markup)
 
     elif call.data.startswith("remove_favorite_"):
-        recipe_id = int(call.data.split("_")[2])
+        data = call.data.split("_")
+        recipe_id = int(data[2])
         tg_id = call.from_user.id
 
         SQL_request("DELETE FROM favorite_recipes WHERE tg_id = ? AND recipe_id = ?", (tg_id, recipe_id))
 
-        markup = InlineKeyboardMarkup(row_width=2)
-        markup.add(InlineKeyboardButton(text="🤍 В избранное", callback_data=f"add_favorite_{recipe_id}"))
+        bot.edit_message_text(chat_id=tg_id, message_id=call.message.message_id, text="Рецепт удалён!")
 
-        # Восстанавливаем остальные кнопки
-        markup.add(InlineKeyboardButton(text="🗑 Удалить", callback_data=f"delete_recipe_{recipe_id}"))
-        markup.add(
-            InlineKeyboardButton(text="◀️ Назад", callback_data="recipes_page_1"),
-            InlineKeyboardButton(text="▶️ Далее", callback_data=f"start_recipe_{recipe_id}")
-        )
+        favorite_recipes = SQL_request("SELECT local_recipes_id, recipe_name FROM local_recipes WHERE local_recipes_id IN (SELECT recipe_id FROM favorite_recipes WHERE tg_id = ?)", (tg_id,))
 
-        bot.edit_message_reply_markup(chat_id=call.message.chat.id, message_id=call.message.message_id, reply_markup=markup)
+        if favorite_recipes:
+            show_favorites_with_pagination(tg_id, call)
+        else:
+            bot.edit_message_text(chat_id=tg_id, message_id=messages_id, text="У вас нет избранных рецептов :(", reply_markup=keyboard_markup)
 
 
     if call.data == "create_recipe":
