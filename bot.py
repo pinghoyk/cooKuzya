@@ -483,7 +483,7 @@ def callback_query(call):
 
             # Проверка, добавлен ли рецепт в избранное
             if is_favorite:
-                favorite_button_text = "💔 Убрать из избранного"
+                favorite_button_text = "❤️ В избранном"
                 favorite_callback_data = f"remove_favorite_{recipe_id}"
             else:
                 favorite_button_text = "🤍 В избранное"
