@@ -512,6 +512,20 @@ def callback_query(call):
                 )
             )
 
+    elif call.data.startswith("favorite_next_") or call.data.startswith("favorite_prev_"):
+        recipe_id, current_step = map(int, call.data.split("_")[2:])
+        recipe = get_recipe(recipe_id, tg_id)
+
+        if recipe:
+            recipe_name, instructions = recipe[0]
+            steps = instructions.split('\n')
+            total_steps = len(steps)
+
+            if 0 <= current_step < total_steps:
+                update_favorite_message(tg_id, messages_id, recipe_name, steps, current_step, total_steps, recipe_id)
+            else:
+                bot.answer_callback_query(call.id, text="Некорректный шаг!")
+
 
     if call.data == "create_recipe":
         show_recipes_with_pagination(tg_id, call, page=1)
