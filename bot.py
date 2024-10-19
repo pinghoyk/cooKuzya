@@ -98,7 +98,7 @@ except sqlite3.Error as e:
 # ФУНКЦИИ
 # Подключение к бд
 def SQL_request(request, params=(), fetchone=False):
-    with sqlite3.connect(DB_PATH) as conn:
+    with sqlite3.connect(DB_NAME) as conn:
         cursor = conn.cursor()
         cursor.execute(request, params)
         if fetchone:
