@@ -382,7 +382,6 @@ def update_favorite_message(chat_id, message_id, recipe_name, steps, current_ste
     )
 
 
-
 @bot.message_handler(commands=['start'])
 def start(message):
     tg_id = message.chat.id
@@ -439,13 +438,27 @@ def callback_query(call):
 
             markup.add(
                 InlineKeyboardButton(text="◀️ Назад", callback_data="view_favorites"),
-                InlineKeyboardButton(text="▶️ Вперед", callback_data=f"start_recipe_{recipe_id}")
+                InlineKeyboardButton(text="▶️ Вперед", callback_data=f"start_favorite_{recipe_id}")
             )
 
 
             bot.edit_message_text(chat_id=tg_id, message_id=call.message.message_id, text=f"Рецепт: {recipe_name}\n\nСостав:\n{ingredients}\n\n", reply_markup=markup)
         else:
             bot.edit_message_text(chat_id=tg_id, message_id=call.message.message_id, text="Рецепт не найден.")
+
+    elif call.data == "view_favorites":
+        tg_id = call.from_user.id
+        favorite_recipes = SQL_request("SELECT local_recipes_id, recipe_name FROM local_recipes WHERE local_recipes_id IN (SELECT recipe_id FROM favorite_recipes WHERE tg_id = ?)", (tg_id,))
+
+        if favorite_recipes:
+            markup = InlineKeyboardMarkup(row_width=1)
+            for recipe_id, recipe_name in favorite_recipes:
+                markup.add(InlineKeyboardButton(text=recipe_name, callback_data=f"view_favorite_recipe_{recipe_id}"))
+            
+            bot.edit_message_text(chat_id=tg_id, message_id=call.message.message_id, text="Ваши избранные рецепты:", reply_markup=markup)
+        else:
+            bot.edit_message_text(chat_id=tg_id, message_id=call.message.message_id, text="У вас нет избранных рецептов.")
+
 
     elif call.data.startswith("add_favorite_"):
         recipe_id = int(call.data.split("_")[2])
