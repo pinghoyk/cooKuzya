@@ -507,7 +507,7 @@ def callback_query(call):
 
     elif call.data.startswith("start_recipe_"):
         recipe_id = int(call.data.split("_")[2])
-        recipe = get_recipe(recipe_id)
+        recipe = get_recipe(recipe_id, tg_id)
 
         if recipe:
             recipe_name, instructions = recipe[0]
@@ -526,7 +526,7 @@ def callback_query(call):
 
     elif call.data.startswith("step_next_") or call.data.startswith("step_prev_"):
         recipe_id, current_step = map(int, call.data.split("_")[2:])
-        recipe = get_recipe(recipe_id)
+        recipe = get_recipe(recipe_id, tg_id)
 
         if recipe:
             recipe_name, instructions = recipe[0]
