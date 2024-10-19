@@ -343,7 +343,7 @@ def update_recipe_message(chat_id, message_id, recipe_name, steps, current_step,
     buttons = []
 
     if current_step == 0:
-        buttons.append(InlineKeyboardButton(text="◀️ Назад", callback_data=f"view_recipe_{recipe_id}"))
+        buttons.append(InlineKeyboardButton(text="◀️ Назад", callback_data=f"view_local_recipe_{recipe_id}"))
     else:
         buttons.append(InlineKeyboardButton(text="◀️ Назад", callback_data=f"step_prev_{recipe_id}_{current_step - 1}"))
 
