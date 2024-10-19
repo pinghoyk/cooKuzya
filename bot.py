@@ -335,8 +335,8 @@ def generate_recipes_keyboard(user_recipes, page, total_pages):
 
 
 # Функция для получения рецепта
-def get_recipe(recipe_id):
-    return SQL_request("SELECT recipe_name, instructions FROM recipes WHERE id = ?", (recipe_id,))
+def get_recipe(recipe_id, tg_id):
+    return SQL_request("SELECT recipe_name, instructions FROM local_recipes WHERE local_recipes_id = ? AND tg_id = ?", (recipe_id, tg_id))
 
 # Функция для обновления сообщения с шагом рецепта и кнопками
 def update_recipe_message(chat_id, message_id, recipe_name, steps, current_step, total_steps, recipe_id, is_favorite=False):
