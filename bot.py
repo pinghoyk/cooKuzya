@@ -338,8 +338,9 @@ def generate_recipes_keyboard(user_recipes, page, total_pages):
 def get_recipe(recipe_id, tg_id):
     return SQL_request("SELECT recipe_name, instructions FROM local_recipes WHERE local_recipes_id = ? AND tg_id = ?", (recipe_id, tg_id))
 
-# Функция для обновления сообщения с шагом рецепта и кнопками
-def update_recipe_message(chat_id, message_id, recipe_name, steps, current_step, total_steps, recipe_id, is_favorite=False):
+
+# Функция для обновления сообщения в локальном меню с шагом рецепта и кнопками
+def update_recipe_message(chat_id, message_id, recipe_name, steps, current_step, total_steps, recipe_id):
     buttons = []
 
     if current_step == 0:
@@ -348,9 +349,9 @@ def update_recipe_message(chat_id, message_id, recipe_name, steps, current_step,
         buttons.append(InlineKeyboardButton(text="◀️ Назад", callback_data=f"step_prev_{recipe_id}_{current_step - 1}"))
 
     if current_step + 1 < total_steps:
-        buttons.append(InlineKeyboardButton(text="▶ Далее", callback_data=f"step_next_{recipe_id}_{current_step + 1}"))
+        buttons.append(InlineKeyboardButton(text="▶ Далее", callback_data=f"step_next_{recipe_id}_{current_step + 1}" ))
     else:
-        buttons.append(InlineKeyboardButton(text="✅ Готово", callback_data="favorite_recipe" if is_favorite else "create_recipe"))
+        buttons.append(InlineKeyboardButton(text="✅ Готово", callback_data="create_recipe"))
 
     bot.edit_message_text(
         chat_id=chat_id,
@@ -358,6 +359,28 @@ def update_recipe_message(chat_id, message_id, recipe_name, steps, current_step,
         text=f"{recipe_name}\n\nШаг {current_step + 1}/{total_steps}:\n\n{steps[current_step]}",
         reply_markup=InlineKeyboardMarkup().add(*buttons)
     )
+
+# Функция для обновления сообщения в избранном меню с шагом рецепта и кнопками
+def update_favorite_message(chat_id, message_id, recipe_name, steps, current_step, total_steps, recipe_id):
+    buttons = []
+
+    if current_step == 0:
+        buttons.append(InlineKeyboardButton(text="◀️ Назад", callback_data=f"view_favorite_recipe_{recipe_id}"))
+    else:
+        buttons.append(InlineKeyboardButton(text="◀️ Назад", callback_data=f"favorite_prev_{recipe_id}_{current_step - 1}"))
+
+    if current_step + 1 < total_steps:
+        buttons.append(InlineKeyboardButton(text="▶ Далее", callback_data=f"favorite_next_{recipe_id}_{current_step + 1}"))
+    else:
+        buttons.append(InlineKeyboardButton(text="✅ Готово", callback_data="favorite_recipe"))
+
+    bot.edit_message_text(
+        chat_id=chat_id,
+        message_id=message_id,
+        text=f"{recipe_name}\n\nШаг {current_step + 1}/{total_steps}:\n\n{steps[current_step]}",
+        reply_markup=InlineKeyboardMarkup().add(*buttons)
+    )
+
 
 
 @bot.message_handler(commands=['start'])
