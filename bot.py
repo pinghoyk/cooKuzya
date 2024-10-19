@@ -266,7 +266,7 @@ def show_favorites_with_pagination(tg_id, call, page=1):
 
     if user_favorites:
         markup_favorites = generate_favorites_keyboard(user_favorites, page, total_pages)
-        bot.edit_message_text("Ваши избранные рецепты:", tg_id, call.message.message_id, reply_markup=markup_favorites)
+        bot.edit_message_text("Ваше избранное:", tg_id, call.message.message_id, reply_markup=markup_favorites)
     else:
         bot.edit_message_text("У вас нет избранных рецептов :(", tg_id, call.message.message_id, reply_markup=keyboard_markup)
 
@@ -455,7 +455,7 @@ def callback_query(call):
             for recipe_id, recipe_name in favorite_recipes:
                 markup.add(InlineKeyboardButton(text=recipe_name, callback_data=f"view_favorite_recipe_{recipe_id}"))
             
-            bot.edit_message_text(chat_id=tg_id, message_id=call.message.message_id, text="Ваши избранные рецепты:", reply_markup=markup)
+            bot.edit_message_text(chat_id=tg_id, message_id=call.message.message_id, text="Ваше избранное:", reply_markup=markup)
         else:
             bot.edit_message_text(chat_id=tg_id, message_id=call.message.message_id, text="У вас нет избранных рецептов.")
 
