@@ -538,7 +538,7 @@ def callback_query(call):
         recipe_id = int(call.data.split("_")[3])
         # Запрос рецепта из базы данных
         recipe = SQL_request("SELECT recipe_name, ingredients, instructions FROM local_recipes WHERE local_recipes_id = ?", (recipe_id,))
-        is_favorite = SQL_request("SELECT COUNT(*) FROM favorite_recipes WHERE tg_id = ? AND recipe_id = ?", (tg_id, recipe_id))[0][0]  # Проверка, есть ли рецепт в избранном
+        is_favorite = SQL_request("SELECT COUNT(*) FROM favorite_recipes WHERE tg_id = ? AND recipe_id = ?", (tg_id, recipe_id))[0][0]
 
         if recipe:
             recipe_name, ingredients, instructions = recipe[0]
@@ -571,10 +571,10 @@ def callback_query(call):
         else:
             bot.edit_message_text(chat_id=tg_id, message_id=call.message.message_id, text="Рецепт не найден.")
 
-
     elif call.data.startswith("start_recipe_"):
         recipe_id = int(call.data.split("_")[2])
         recipe = get_recipe(recipe_id, tg_id)
+        print(recipe)
 
         if recipe:
             recipe_name, instructions = recipe[0]
@@ -604,6 +604,7 @@ def callback_query(call):
                 update_recipe_message(tg_id, messages_id, recipe_name, steps, current_step, total_steps, recipe_id)
             else:
                 bot.answer_callback_query(call.id, text="Некорректный шаг!")
+
 
     elif call.data.startswith("delete_recipe_"):
         try:
@@ -635,15 +636,15 @@ def callback_query(call):
 
     elif call.data == "change_name":
         bot.edit_message_text(chat_id=tg_id, message_id=messages_id, text="Введите новое название рецепта:")
-        bot.register_next_step_handler_by_chat_id(tg_id, lambda message: handle_name(message, message_id))
+        bot.register_next_step_handler_by_chat_id(tg_id, lambda message: handle_name(message, messages_id))
 
     elif call.data == "change_ingredients":
         bot.edit_message_text(chat_id=tg_id, message_id=messages_id, text="Введите новый состав рецепта:")
-        bot.register_next_step_handler_by_chat_id(tg_id, lambda message: handle_ingredients(message, message_id))
+        bot.register_next_step_handler_by_chat_id(tg_id, lambda message: handle_ingredients(message, messages_id))
 
     elif call.data == "change_steps":
         bot.edit_message_text(chat_id=tg_id, message_id=messages_id, text="Введите шаги приготовления (по одному на строку):")
-        bot.register_next_step_handler_by_chat_id(tg_id, lambda message: handle_steps(message, message_id))
+        bot.register_next_step_handler_by_chat_id(tg_id, lambda message: handle_steps(message, messages_id))
 
     elif call.data == "cancel_recipe":
         bot.edit_message_text(chat_id=tg_id, message_id=messages_id, text="Сохранение рецепта отменено.", reply_markup=keyboard_markup)
