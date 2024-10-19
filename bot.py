@@ -492,6 +492,26 @@ def callback_query(call):
         else:
             bot.edit_message_text(chat_id=tg_id, message_id=messages_id, text="У вас нет избранных рецептов :(", reply_markup=keyboard_markup)
 
+    elif call.data.startswith("start_favorite_"):
+        recipe_id = int(call.data.split("_")[2])
+        tg_id = call.from_user.id  # добавил определение ID пользователя
+        recipe = get_recipe(recipe_id, tg_id)
+
+        if recipe:
+            recipe_name, instructions = recipe[0]
+            steps = instructions.split('\n')
+            total_steps = len(steps)
+
+            bot.edit_message_text(
+                chat_id=tg_id,
+                message_id=call.message.message_id,  # call.message.message_id вместо messages_id
+                text=f"{recipe_name}\n\nШаг 1/{total_steps}:\n\n{steps[0]}",
+                reply_markup=InlineKeyboardMarkup().add(
+                    InlineKeyboardButton(text="◀️ Назад", callback_data=f"view_favorite_recipe_{recipe_id  }"),
+                    InlineKeyboardButton(text="▶ Далее", callback_data=f"favorite_next_{recipe_id}_1")
+                )
+            )
+
 
     if call.data == "create_recipe":
         show_recipes_with_pagination(tg_id, call, page=1)
