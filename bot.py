@@ -132,6 +132,10 @@ def handle_name(message, message_id):
     recipe_name = message.text
     tg_id = message.chat.id
 
+    if recipe_name.strip().lower() == '/start':
+        start(message)
+        return
+
     # Попытка удалить сообщение пользователя, если оно существует
     try:
         bot.delete_message(chat_id=tg_id, message_id=message.message_id)
@@ -164,6 +168,10 @@ def handle_ingredients(message, message_id):
     tg_id = message.chat.id
     ingredients = message.text
 
+    if ingredients.strip().lower() == '/start':
+        start(message)
+        return
+
     try:
         bot.delete_message(chat_id=tg_id, message_id=message.message_id)
     except telebot.apihelper.ApiTelegramException as e:
@@ -191,6 +199,10 @@ def handle_ingredients(message, message_id):
 def handle_steps(message, message_id):
     tg_id = message.chat.id
     steps = message.text
+
+    if steps.strip().lower() == '/start':
+        start(message)
+        return
 
     try:
         bot.delete_message(chat_id=tg_id, message_id=message.message_id)
