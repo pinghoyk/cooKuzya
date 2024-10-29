@@ -349,6 +349,13 @@ def generate_recipes_keyboard(user_recipes, page, total_pages):
     return markup_recipes
 
 
+# Изменяем название рецепта
+def update_recipe_name(message, tg_id, recipe_id, message_id):
+    new_name = message.text
+    SQL_request("UPDATE local_recipes SET recipe_name = ? WHERE local_recipes_id = ?", (new_name, recipe_id))
+    view_recipe(tg_id, recipe_id, message_id)
+
+
 # Функция для получения рецепта
 def get_recipe(recipe_id, tg_id):
     return SQL_request("SELECT recipe_name, instructions FROM local_recipes WHERE local_recipes_id = ? AND tg_id = ?", (recipe_id, tg_id))
