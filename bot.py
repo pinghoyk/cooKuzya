@@ -378,6 +378,25 @@ def update_recipe_instructions(message, tg_id, recipe_id, message_id):
     SQL_request("UPDATE local_recipes SET instructions = ? WHERE local_recipes_id = ?", (new_instructions_text, recipe_id))
     view_recipe(tg_id, recipe_id, message_id)
 
+# Функция для просмотра обновленного рецепта
+def view_recipe(tg_id, recipe_id, message_id):
+    recipe = SQL_request("SELECT recipe_name, ingredients, instructions FROM local_recipes WHERE local_recipes_id = ?", (recipe_id,))
+    
+    if recipe:
+        recipe_name, ingredients, instructions = recipe[0]
+        markup = InlineKeyboardMarkup(row_width=1)
+        markup.add(
+                InlineKeyboardButton(text="Изменить название", callback_data=f"edit_recipe_name_{recipe_id}"),
+                InlineKeyboardButton(text="Изменить состав", callback_data=f"edit_recipe_ingredients_{recipe_id}"),
+                InlineKeyboardButton(text="Изменить инструкции", callback_data=f"edit_recipe_instructions_{recipe_id}"))
+        markup.add(InlineKeyboardButton(text="◀️ Назад", callback_data="recipes_page_1"))
+        
+        bot.edit_message_text(
+            chat_id=tg_id,
+            message_id=message_id,
+            text=f"Рецепт обновлен:\n\nНазвание: {recipe_name}\n\nСостав:\n{ingredients}\n\nИнструкции:\n{instructions}",
+            reply_markup=markup
+        )
 
 # Функция для получения рецепта
 def get_recipe(recipe_id, tg_id):
