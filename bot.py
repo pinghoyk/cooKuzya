@@ -355,6 +355,12 @@ def update_recipe_name(message, tg_id, recipe_id, message_id):
     SQL_request("UPDATE local_recipes SET recipe_name = ? WHERE local_recipes_id = ?", (new_name, recipe_id))
     view_recipe(tg_id, recipe_id, message_id)
 
+# Изменяем состав рецепта
+def update_recipe_ingredients(message, tg_id, recipe_id, message_id):
+    new_ingredients = message.text
+    SQL_request("UPDATE local_recipes SET ingredients = ? WHERE local_recipes_id = ?", (new_ingredients, recipe_id))
+    view_recipe(tg_id, recipe_id, message_id)
+
 
 # Функция для получения рецепта
 def get_recipe(recipe_id, tg_id):
