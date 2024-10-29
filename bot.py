@@ -388,8 +388,8 @@ def view_recipe(tg_id, recipe_id, message_id):
         markup.add(
                 InlineKeyboardButton(text="Изменить название", callback_data=f"edit_recipe_name_{recipe_id}"),
                 InlineKeyboardButton(text="Изменить состав", callback_data=f"edit_recipe_ingredients_{recipe_id}"),
-                InlineKeyboardButton(text="Изменить инструкции", callback_data=f"edit_recipe_instructions_{recipe_id}"))
-        markup.add(InlineKeyboardButton(text="◀️ Назад", callback_data="recipes_page_1"))
+                InlineKeyboardButton(text="Изменить шаги", callback_data=f"edit_recipe_instructions_{recipe_id}"))
+        markup.add(InlineKeyboardButton(text="◀️ Назад", callback_data=f"view_local_recipe_{recipe_id}"))
         
         bot.edit_message_text(
             chat_id=tg_id,
@@ -732,6 +732,31 @@ def callback_query(call):
         else:
             bot.edit_message_text(chat_id=tg_id, message_id=messages_id, reply_markup=keyboard_markup, text="Произошла ошибка сохранения. Пожалуйста, попробуйте снова.\n\nВведите название рецепта")
             bot.register_next_step_handler(call.message, handle_name, initial_message.message_id)
+
+
+    if call.data.startswith("change_recipe_"):
+        recipe_id = int(call.data.split("_")[2])
+        recipe = SQL_request("SELECT recipe_name, ingredients, instructions FROM local_recipes WHERE local_recipes_id = ?", (recipe_id,))
+        
+        if recipe:
+            recipe_name, ingredients, instructions = recipe[0]
+            
+            markup = InlineKeyboardMarkup(row_width=1)
+            markup.add(
+                InlineKeyboardButton(text="Изменить название", callback_data=f"edit_recipe_name_{recipe_id}"),
+                InlineKeyboardButton(text="Изменить состав", callback_data=f"edit_recipe_ingredients_{recipe_id}"),
+                InlineKeyboardButton(text="Изменить шаги", callback_data=f"edit_recipe_instructions_{recipe_id}"),
+                InlineKeyboardButton(text="◀️ Назад", callback_data=f"view_local_recipe_{recipe_id}")
+            )
+            
+            bot.edit_message_text(
+                chat_id=call.message.chat.id,
+                message_id=call.message.message_id,
+                text=f"Название: {recipe_name}\n\nСостав:\n{ingredients}\n\nШаги:\n{instructions}\n\nВыберите, что хотите изменить:",
+                reply_markup=markup
+            )
+
+
 
 
     if call.data == "back_recipe":
