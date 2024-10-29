@@ -756,6 +756,44 @@ def callback_query(call):
                 reply_markup=markup
             )
 
+    elif call.data.startswith("edit_recipe_name_"):
+        recipe_id = int(call.data.split("_")[-1])
+
+        recipe = SQL_request("SELECT recipe_name, ingredients, instructions FROM local_recipes WHERE local_recipes_id = ?", (recipe_id,))
+            
+        markup = InlineKeyboardMarkup(row_width=1)
+        markup.add(InlineKeyboardButton(text="◀️ Назад", callback_data=f"view_local_recipe_{recipe_id}"))
+
+        msg = bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text="Введите новое название рецепта:", reply_markup=markup)
+
+        tg_id = call.message.chat.id
+        message_id = msg.message_id
+        bot.register_next_step_handler(msg, update_recipe_name, tg_id, recipe_id, message_id)
+
+    elif call.data.startswith("edit_recipe_ingredients_"):
+        recipe_id = int(call.data.split("_")[-1])
+        recipe = SQL_request("SELECT recipe_name, ingredients, instructions FROM local_recipes WHERE local_recipes_id = ?", (recipe_id,))
+
+        markup = InlineKeyboardMarkup(row_width=1)
+        markup.add(InlineKeyboardButton(text="◀️ Назад", callback_data=f"view_local_recipe_{recipe_id}"))
+
+        msg = bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text="Введите новый состав рецепта:", reply_markup=markup)
+
+        tg_id = call.message.chat.id
+        message_id = msg.message_id  
+        bot.register_next_step_handler(msg, update_recipe_ingredients, tg_id, recipe_id, message_id)
+
+    elif call.data.startswith("edit_recipe_instructions_"):
+        recipe_id = int(call.data.split("_")[-1])
+            
+        markup = InlineKeyboardMarkup(row_width=1)
+        markup.add(InlineKeyboardButton(text="◀️ Назад", callback_data=f"view_local_recipe_{recipe_id}"))
+
+        msg = bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text="Введите новые инструкции для рецепта:", reply_markup=markup)
+
+        tg_id = call.message.chat.id
+        message_id = msg.message_id  
+        bot.register_next_step_handler(msg, update_recipe_instructions, tg_id, recipe_id, message_id)
 
 
 
