@@ -569,6 +569,8 @@ def callback_query(call):
 
             markup.add(InlineKeyboardButton(text=favorite_button_text, callback_data=favorite_callback_data))
 
+            markup.add(InlineKeyboardButton(text="✏️ Редактировать", callback_data=f"change_recipe_{recipe_id}"))
+
             # Добавляем кнопку "Удалить" только для личных рецептов
             if not call.data.startswith("view_favorites_"):
                 markup.add(InlineKeyboardButton(text="🗑 Удалить", callback_data=f"delete_recipe_{recipe_id}"))
