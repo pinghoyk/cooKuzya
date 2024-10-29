@@ -285,18 +285,21 @@ def show_favorites_with_pagination(tg_id, call, page=1):
 def generate_favorites_keyboard(user_favorites, page, total_pages):
     markup_favorites = InlineKeyboardMarkup()
 
+    # Кнопки с избранными рецептами
     for favorite in user_favorites:
         recipe_id = favorite[2]
         recipe_name = favorite[1]
         markup_favorites.add(InlineKeyboardButton(text=recipe_name, callback_data=f"view_favorite_recipe_{recipe_id}"))
 
+    # Кнопки для пагинации
     navigation_buttons = []
     if page > 1:
-        navigation_buttons.append(InlineKeyboardButton(text=" ◀️  Назад", callback_data=f"recipes_page_{page - 1}"))
+        navigation_buttons.append(InlineKeyboardButton(text="◀️ Назад", callback_data=f"view_favorites_{page - 1}"))
     else:
-        navigation_buttons.append(InlineKeyboardButton(text=" ◀️  Назад", callback_data="btn_back"))
+        navigation_buttons.append(InlineKeyboardButton(text="◀️ Назад", callback_data="btn_back"))
+    
     if page < total_pages:
-        navigation_buttons.append(InlineKeyboardButton(text=" ▶️ Вперед", callback_data=f"favorites_page_{page + 1}"))
+        navigation_buttons.append(InlineKeyboardButton(text="▶️ Вперед", callback_data=f"view_favorites_{page + 1}"))
 
     if navigation_buttons:
         markup_favorites.row(*navigation_buttons)
@@ -440,53 +443,46 @@ def callback_query(call):
         show_favorites_with_pagination(tg_id, call, page=1)
 
     elif call.data.startswith("view_favorite_recipe_"):
-        recipe_id = int(call.data.split("_")[3])
-        tg_id = call.from_user.id
+        data_parts = call.data.split("_")
+        if len(data_parts) >= 4:
+            recipe_id = int(data_parts[3])
+            recipe = SQL_request("SELECT recipe_name, ingredients, instructions FROM local_recipes WHERE local_recipes_id = ?", (recipe_id,))
+            is_favorite = SQL_request("SELECT COUNT(*) FROM favorite_recipes WHERE tg_id = ? AND recipe_id = ?", (tg_id, recipe_id))[0][0]
 
-        recipe = SQL_request("SELECT recipe_name, ingredients, instructions FROM local_recipes WHERE local_recipes_id = ?", (recipe_id,))
-        is_favorite = SQL_request("SELECT COUNT(*) FROM favorite_recipes WHERE tg_id = ? AND recipe_id = ?", (tg_id, recipe_id))[0][0]  # Проверка, в избранном ли рецепт
+            if recipe:
+                recipe_name, ingredients, instructions = recipe[0]
+                steps = instructions.split('\n')
+                current_steps[tg_id] = (recipe_id, 0)  # Начинаем с шага 0
 
-        if recipe:
-            recipe_name, ingredients, instructions = recipe[0]
-            steps = instructions.split('\n')
-            current_steps[tg_id] = (recipe_id, 0)  # Начинаем с шага 0
+                markup = InlineKeyboardMarkup(row_width=2)
+                markup.add(InlineKeyboardButton(text="❤️ В избранном", callback_data=f"remove_favorite_{recipe_id}"))
+                markup.add(
+                    InlineKeyboardButton(text="◀️ Назад", callback_data="view_favorites_1"),
+                    InlineKeyboardButton(text="▶️ Далее", callback_data=f"start_favorite_{recipe_id}")
+                )
 
-            markup = InlineKeyboardMarkup(row_width=2)
+                bot.edit_message_text(
+                    chat_id=tg_id,
+                    message_id=call.message.message_id,
+                    text=f"Рецепт: {recipe_name}\n\nСостав:\n{ingredients}\n\n",
+                    reply_markup=markup
+                )
+            else:
+                bot.edit_message_text(chat_id=tg_id, message_id=call.message.message_id, text="Рецепт не найден.")
 
-            markup.add(InlineKeyboardButton(text="❤️ В избранном", callback_data=f"remove_favorite_{recipe_id}"))
-
-            markup.add(
-                InlineKeyboardButton(text="◀️ Назад", callback_data="view_favorites"),
-                InlineKeyboardButton(text="▶️ Вперед", callback_data=f"start_favorite_{recipe_id}")
-            )
-
-
-            bot.edit_message_text(chat_id=tg_id, message_id=call.message.message_id, text=f"Рецепт: {recipe_name}\n\nСостав:\n{ingredients}\n\n", reply_markup=markup)
-        else:
-            bot.edit_message_text(chat_id=tg_id, message_id=call.message.message_id, text="Рецепт не найден.")
-
-    elif call.data == "view_favorites":
-        tg_id = call.from_user.id
-        favorite_recipes = SQL_request("SELECT local_recipes_id, recipe_name FROM local_recipes WHERE local_recipes_id IN (SELECT recipe_id FROM favorite_recipes WHERE tg_id = ?)", (tg_id,))
-
-        if favorite_recipes:
-            markup = InlineKeyboardMarkup(row_width=1)
-            for recipe_id, recipe_name in favorite_recipes:
-                markup.add(InlineKeyboardButton(text=recipe_name, callback_data=f"view_favorite_recipe_{recipe_id}"))
-            
-            bot.edit_message_text(chat_id=tg_id, message_id=call.message.message_id, text="Ваше избранное:", reply_markup=markup)
-        else:
-            bot.edit_message_text(chat_id=tg_id, message_id=call.message.message_id, text="У вас нет избранных рецептов.")
+    if call.data.startswith("view_favorites_"):
+        try:
+            page = int(call.data.split("_")[2])
+            show_favorites_with_pagination(tg_id, call, page)
+        except (IndexError, ValueError):
+            bot.answer_callback_query(call.id, text="Ошибка: Номер страницы не найден")
 
     elif call.data.startswith("add_favorite_"):
         recipe_id = int(call.data.split("_")[2])
-        tg_id = call.from_user.id
-
         SQL_request("INSERT INTO favorite_recipes (tg_id, recipe_id, recipe_type) VALUES (?, ?, ?)", (tg_id, recipe_id, 'local'))
 
         markup = InlineKeyboardMarkup(row_width=2)
         markup.add(InlineKeyboardButton(text="❤️ В избранном", callback_data=f"remove_favorite_{recipe_id}"))
-
         markup.add(InlineKeyboardButton(text="🗑 Удалить", callback_data=f"delete_recipe_{recipe_id}"))
         markup.add(
             InlineKeyboardButton(text="◀️ Назад", callback_data="recipes_page_1"),
@@ -496,24 +492,19 @@ def callback_query(call):
         bot.edit_message_reply_markup(chat_id=call.message.chat.id, message_id=call.message.message_id, reply_markup=markup)
 
     elif call.data.startswith("remove_favorite_"):
-        data = call.data.split("_")
-        recipe_id = int(data[2])
-        tg_id = call.from_user.id
-
+        recipe_id = int(call.data.split("_")[2])
         SQL_request("DELETE FROM favorite_recipes WHERE tg_id = ? AND recipe_id = ?", (tg_id, recipe_id))
 
         bot.edit_message_text(chat_id=tg_id, message_id=call.message.message_id, text="Рецепт удалён!")
 
         favorite_recipes = SQL_request("SELECT local_recipes_id, recipe_name FROM local_recipes WHERE local_recipes_id IN (SELECT recipe_id FROM favorite_recipes WHERE tg_id = ?)", (tg_id,))
-
         if favorite_recipes:
             show_favorites_with_pagination(tg_id, call)
         else:
-            bot.edit_message_text(chat_id=tg_id, message_id=messages_id, text="У вас нет избранных рецептов :(", reply_markup=keyboard_markup)
+            bot.edit_message_text(chat_id=tg_id, message_id=call.message.message_id, text="У вас нет избранных рецептов :(", reply_markup=keyboard_markup)
 
     elif call.data.startswith("start_favorite_"):
         recipe_id = int(call.data.split("_")[2])
-        tg_id = call.from_user.id  # добавил определение ID пользователя
         recipe = get_recipe(recipe_id, tg_id)
 
         if recipe:
@@ -521,18 +512,19 @@ def callback_query(call):
             steps = instructions.split('\n')
             total_steps = len(steps)
 
-            bot.edit_message_text(
-                chat_id=tg_id,
-                message_id=call.message.message_id,  # call.message.message_id вместо messages_id
-                text=f"{recipe_name}\n\nШаг 1/{total_steps}:\n\n{steps[0]}",
-                reply_markup=InlineKeyboardMarkup().add(
-                    InlineKeyboardButton(text="◀️ Назад", callback_data=f"view_favorite_recipe_{recipe_id  }"),
-                    InlineKeyboardButton(text="▶ Далее", callback_data=f"favorite_next_{recipe_id}_1")
-                )
+        bot.edit_message_text(
+            chat_id=tg_id,
+            message_id=call.message.message_id,
+            text=f"{recipe_name}\n\nШаг 1/{total_steps}:\n\n{steps[0]}",
+            reply_markup=InlineKeyboardMarkup().add(
+                InlineKeyboardButton(text="◀️ Назад", callback_data=f"view_favorite_recipe_{recipe_id}"),
+                InlineKeyboardButton(text="▶ Далее", callback_data=f"favorite_next_{recipe_id}_1")
             )
+        )
 
     elif call.data.startswith("favorite_next_") or call.data.startswith("favorite_prev_"):
-        recipe_id, current_step = map(int, call.data.split("_")[2:])
+        data_parts = call.data.split("_")
+        recipe_id, current_step = int(data_parts[2]), int(data_parts[3])
         recipe = get_recipe(recipe_id, tg_id)
 
         if recipe:
@@ -541,7 +533,7 @@ def callback_query(call):
             total_steps = len(steps)
 
             if 0 <= current_step < total_steps:
-                update_favorite_message(tg_id, messages_id, recipe_name, steps, current_step, total_steps, recipe_id)
+                update_favorite_message(tg_id, call.message.message_id, recipe_name, steps, current_step, total_steps, recipe_id)
             else:
                 bot.answer_callback_query(call.id, text="Некорректный шаг!")
 
