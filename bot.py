@@ -394,24 +394,31 @@ def update_favorite_message(chat_id, message_id, recipe_name, steps, current_ste
     )
 
 
-@bot.message_handler(commands=['start'])
+@bot.message_handler(commands=['start'])  # обработка команды start
 def start(message):
     tg_id = message.chat.id
     tg_username = message.chat.username
     tg_first_name = message.from_user.first_name
 
     user = SQL_request("SELECT * FROM users WHERE tg_id = ?", (tg_id,), fetchone=True)
-    
+
     if not user:
         SQL_request('INSERT INTO users (messages_id, tg_id, tg_username, tg_first_name, time_registration) VALUES (?, ?, ?, ?, ?)',
                     (message.message_id, tg_id, tg_username, tg_first_name, now_time()))
         bot.send_message(tg_id, f"Добро пожаловать, {tg_first_name}!", reply_markup=keyboard_main)
-        print(f"{LOG} Зарегистрирован новый пользователь")
+        print(f"{LOG} Зарегистрирован новый пользователь") 
     else:
-        SQL_request("UPDATE users SET messages_id = ? WHERE tg_id = ?", (message.message_id, tg_id))
+        menu_id = SQL_request("SELECT messages_id FROM users WHERE tg_id = ?", (tg_id,))
+
+        try: bot.delete_message(message.chat.id, menu_id[0])
+        except Exception as e: print(f"Ошибка: {e}")  # вывод текста ошибки
+
+        SQL_request("UPDATE users SET messages_id = ? WHERE tg_id = ?", (message.message_id+1, tg_id))
         greeting = get_greeting(tg_first_name)
         bot.send_message(tg_id, greeting, reply_markup=keyboard_main)
         print(f"{LOG} Пользователь уже существует")
+    bot.delete_message(tg_id, message.message_id)
+
 
 
 @bot.callback_query_handler(func=lambda call: True)
