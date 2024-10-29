@@ -585,7 +585,6 @@ def callback_query(call):
     elif call.data.startswith("start_recipe_"):
         recipe_id = int(call.data.split("_")[2])
         recipe = get_recipe(recipe_id, tg_id)
-        print(recipe)
 
         if recipe:
             recipe_name, instructions = recipe[0]
