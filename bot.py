@@ -361,6 +361,23 @@ def update_recipe_ingredients(message, tg_id, recipe_id, message_id):
     SQL_request("UPDATE local_recipes SET ingredients = ? WHERE local_recipes_id = ?", (new_ingredients, recipe_id))
     view_recipe(tg_id, recipe_id, message_id)
 
+# Изменяем шаги рецепта
+def update_recipe_instructions(message, tg_id, recipe_id, message_id):
+    new_instructions = message.text.strip().split("\n")
+
+    if len(new_instructions) < 2:
+        try:
+            bot.send_message(chat_id=tg_id, text="Пожалуйста, введите хотя бы два шага.")
+        except telebot.apihelper.ApiTelegramException as e:
+            print(f"Ошибка при отправке сообщения: {str(e)}")
+
+        bot.register_next_step_handler(message, update_recipe_instructions, tg_id, recipe_id, message.message_id)
+        return
+        
+    new_instructions_text = "\n".join(new_instructions)
+    SQL_request("UPDATE local_recipes SET instructions = ? WHERE local_recipes_id = ?", (new_instructions_text, recipe_id))
+    view_recipe(tg_id, recipe_id, message_id)
+
 
 # Функция для получения рецепта
 def get_recipe(recipe_id, tg_id):
