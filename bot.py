@@ -351,6 +351,10 @@ def generate_recipes_keyboard(user_recipes, page, total_pages):
 
 # Изменяем название рецепта
 def update_recipe_name(message, tg_id, recipe_id, message_id):
+    if message.text.strip().lower() == '/start':
+        start(message)
+        return
+
     new_name = message.text
     bot.delete_message(chat_id=message.chat.id, message_id=message.message_id)
     SQL_request("UPDATE local_recipes SET recipe_name = ? WHERE local_recipes_id = ?", (new_name, recipe_id))
@@ -358,6 +362,10 @@ def update_recipe_name(message, tg_id, recipe_id, message_id):
 
 # Изменяем состав рецепта
 def update_recipe_ingredients(message, tg_id, recipe_id, message_id):
+    if message.text.strip().lower() == '/start':
+        start(message)
+        return
+
     new_ingredients = message.text
     bot.delete_message(chat_id=message.chat.id, message_id=message.message_id)
     SQL_request("UPDATE local_recipes SET ingredients = ? WHERE local_recipes_id = ?", (new_ingredients, recipe_id))
@@ -365,6 +373,10 @@ def update_recipe_ingredients(message, tg_id, recipe_id, message_id):
 
 # Изменяем шаги рецепта
 def update_recipe_instructions(message, tg_id, recipe_id, message_id):
+    if message.text.strip().lower() == '/start':
+        start(message)
+        return
+        
     new_instructions = message.text.strip().split("\n")
     bot.delete_message(chat_id=message.chat.id, message_id=message.message_id)
 
