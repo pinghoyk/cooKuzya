@@ -236,3 +236,40 @@ def show_advice(max_pages=40):
             break
 
     return advice
+
+
+
+# Функция показа совета
+def get_advice(URL):
+    advices = []
+    url = URL
+    response = requests.get(url)
+
+    if response.status_code == 200:
+        soup = BeautifulSoup(response.content, 'html.parser')
+
+        headline = soup.find('h1', class_='detailed').get_text(strip=True) if soup.find('h1', class_='detailed') else 'Заголовок не найден'
+        
+        article_img = soup.find('div', class_='article-img').find('img')['src'] if soup.find('div', class_='article-img') and soup.find('div', class_='article-img').find('img') else 'Изображение не найдено'
+        
+        article_body = soup.find('article', itemprop='articleBody')    # извлекаем содержимое статьи из articleBody
+        content = ''
+        if article_body:
+            for tag in article_body.find_all(['p', 'a', 'pre', 'h2', 'h3', 'h4', 'ul']):  # парсим все нужные теги в articleBody
+                content += tag.get_text(strip=True) + '\n'
+        else:
+            content = 'Контент статьи не найден'
+        
+
+        # Добавляем данные в список советов
+        advices.append({
+            "headline": headline,
+            "article_img": article_img,
+            "content": content
+        })
+
+    else:
+        print(f"Ошибка при запросе: {response.status_code}")
+
+    return advices
+
