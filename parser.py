@@ -141,3 +141,52 @@ def get_recipes_povar(URL):
     return povar_dict
 
 
+
+
+# Функция показа категорий
+def show_categories():
+    base_url = "https://povar.ru/list/"
+    response = requests.get(base_url)
+
+    categories_data = []
+
+    if response.status_code == 200:
+        soup = BeautifulSoup(response.text, 'html.parser')
+
+        main_wrapper = soup.find('div', id='mainWrapper')
+
+        tab_selectors = main_wrapper.find_all('div', class_='tabSelector')    # парсим табы и ссылки в меню
+        for tab_selector in tab_selectors:
+            tab_name = tab_selector.get_text(strip=True)    # ивлекаем название вкладки
+            rel = tab_selector.find('span', class_='tabLink').get('rel', '')    # извлекаем атрибут rel
+            categories_data.append({'type': 'tabSelector', 'name': tab_name, 'rel': rel})
+
+        tab_items = main_wrapper.find_all('div', class_='tabItem')    # парсим категории и ссылки в классе tabItem
+        for tab_item in tab_items:
+            ingredients = tab_item.find_all('div', class_='ingredientItem')
+            for ingredient in ingredients:
+                header = ingredient.find('h2', class_='ingredientItemH2')
+                if header:
+                    ingredient_title = header.get_text(strip=True)
+                    categories_data.append({'type': 'ingredientItem', 'title': ingredient_title})
+
+                subcategories = ingredient.find_all('a')    # парсим подкатегории (ссылки) внутри ingredientItem
+                for subcategory in subcategories:
+                    category_name = subcategory.get_text(strip=True)
+                    category_link = subcategory.get('href')
+                    categories_data.append({'type': 'subcategory', 'name': category_name, 'link': category_link})
+
+        world_columns = main_wrapper.find_all('div', class_='worldColumn')    # парсим все ссылки и категории из worldColumn
+        for world_column in world_columns:
+            links = world_column.find_all('a')
+            for link in links:
+                link_name = link.get_text(strip=True)
+                link_href = link.get('href')
+                categories_data.append({'city': link_name, 'link': link_href})
+
+    else:
+        categories_data['Ошибка'] = f"Ошибка при запросе: {response.status_code}"
+
+    return categories_data
+
+
