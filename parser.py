@@ -190,3 +190,49 @@ def show_categories():
     return categories_data
 
 
+
+
+
+# Функция отображения советов со всех страниц
+def show_advice(max_pages=40):
+    advice = []
+    base_url = "https://povar.ru/art"
+    
+    # Цикл по страницам до max_pages
+    for page in range(1, max_pages + 1):
+        url = f"{base_url}/{page}"
+        response = requests.get(url)
+        
+        if response.status_code == 200:
+            soup = BeautifulSoup(response.text, 'html.parser')
+            cont_area = soup.find('div', class_='cont_area')
+            
+            if not cont_area:
+                print(f"Контент не найден на странице {page}. Прерывание.")
+                break
+            
+            for article in cont_area.find_all('div', class_='articlePrevBig'):    # поиск всех блоков articlePrevBig в cont_area
+                link_tag = article.find('a')    # ссылка на статью
+                link = base_url + link_tag['href'] if link_tag else None
+                
+                img_tag = article.find('img')    # ссылка на изображение
+                img_src = img_tag['src'] if img_tag else None
+                
+                title_tag = article.find('span', class_='art_title')    # название статьи
+                title = title_tag.get_text(strip=True) if title_tag else "Без названия"
+                
+                # Добавляем данные в список советов
+                advice.append({
+                    'title': title,
+                    'link': link,
+                    'image': img_src,
+                })
+                
+            next_page = soup.find('span', class_='next')    # проверяем наличие ссылки на следующую страницу
+            if not next_page or not next_page.find('a'):
+                break
+        else:
+            print(f"Ошибка при запросе страницы {page}: {response.status_code}")
+            break
+
+    return advice
