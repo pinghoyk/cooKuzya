@@ -220,7 +220,7 @@ def handle_steps(message, message_id, recipe_id, edit_mode=False, attempt=1):
                 InlineKeyboardButton(text="📔 Показать рецепт", callback_data=f"show_recipe_{recipe_id}")
             )
 
-            bot.edit_message_text(chat_id=user_id, message_id=message_id, text=f"<b>Шаги:</b>\n{formatted_instructions}\n\nКузя вздохнул... рецепт писать больше не нужно было!", reply_markup=markup, parse_mode="HTML")
+            bot.edit_message_text(chat_id=user_id, message_id=message_id, text=f"<b>Шаги:</b>\n{formatted_instructions}\n\nКузя выдохнул... рецепт писать больше не нужно было!", reply_markup=markup, parse_mode="HTML")
 
         # Удаляем сообщение пользователя
         if message and message.message_id:
@@ -251,7 +251,6 @@ def get_steps_keyboard(recipe_id):
     return markup
 
 
-
 @bot.message_handler(commands=['start'])  # обработка команды start
 def start(message):
     user_id = message.chat.id
@@ -278,3 +277,147 @@ def start(message):
         bot.send_message(user_id, greeting, reply_markup=keyboard_main)
         print(f"{LOG} Пользователь уже существует")
     bot.delete_message(message.chat.id, message.message_id)
+
+
+@bot.callback_query_handler(func=lambda call: True)
+def callback_query(call):
+    print(f"Вызов: {call.data}")
+    user_id = call.message.chat.id
+    name = call.message.chat.first_name
+    message_id = call.message.message_id
+
+    if call.data == 'my_recipe':
+        bot.edit_message_text(chat_id=user_id, message_id=message_id, text="Ваши рецепты", reply_markup=keyboard_recipes)
+
+
+    elif call.data == "btn_back":
+        bot.edit_message_text(chat_id=user_id, message_id=message_id, text="Ваши рецепты", reply_markup=keyboard_recipes)
+
+
+    if call.data == "create_recipe":
+        show_recipes_with_pagination(user_id, call, page=1)
+
+
+    if call.data == "add_recipe":
+        unfinished_recipe = SQL_request("SELECT lr_id FROM local_recipes WHERE id=? AND is_filled=0", (user_id,), fetchone=True)
+
+        if unfinished_recipe:
+            recipe_id = unfinished_recipe[0]
+            
+            markup = InlineKeyboardMarkup(row_width=2)
+            markup.add(
+                InlineKeyboardButton(text="🖊 Дописать", callback_data=f"continue_recipe_{recipe_id}"),
+                InlineKeyboardButton(text="🗑 Стереть", callback_data=f"cancel_recipe_{recipe_id}")
+            )
+            
+            bot.edit_message_text("Кузя не дописал рецепт. Что с ним сделать?", chat_id=user_id, message_id=message_id, reply_markup=markup)
+        else:
+            # Если нет незавершенных рецептов, начинаем новый
+            bot.edit_message_text("Кузя записывает название рецепта:", chat_id=user_id, message_id=message_id, reply_markup=keyboard_markup)
+            bot.register_next_step_handler(call.message, handle_name, message_id)
+
+
+    elif call.data.startswith("continue_recipe_"):
+        try:
+            user_id = call.message.chat.id
+            message_id = call.message.message_id
+            recipe_id = int(call.data.split("_")[2])
+
+            # Загружаем текущий шаг рецепта
+            current_step = SQL_request("SELECT current_step FROM local_recipes WHERE lr_id=?", (recipe_id,), fetchone=True)
+            current_step = current_step[0]
+
+            if current_step == 1:
+                # Получаем название рецепта
+                recipe_name = SQL_request("SELECT recipe_name FROM local_recipes WHERE lr_id=?", (recipe_id,), fetchone=True)[0]
+                markup = get_name_keyboard(recipe_id)  # Клавиатура для этапа ввода названия
+
+                bot.edit_message_text(text=f"Название: <b>{recipe_name}</b>\n\nКузя записывает состав:", chat_id=user_id, message_id=message_id, reply_markup=markup, parse_mode="HTML")
+                bot.register_next_step_handler(call.message, handle_ingredients, message_id, recipe_id)
+
+            elif current_step == 2:
+                # Получаем список ингредиентов
+                ingredients = SQL_request("SELECT ingredients FROM local_recipes WHERE lr_id=?", (recipe_id,), fetchone=True)[0]
+                markup = get_ingredients_keyboard(recipe_id)  # Клавиатура для этапа ввода ингредиентов
+
+                bot.edit_message_text(
+                    text=f"<b>Состав:</b> {ingredients}\n\nКузя готов записать шаги! Введите их, каждый на новой строке:", chat_id=user_id, message_id=message_id, reply_markup=markup, parse_mode="HTML")
+                bot.register_next_step_handler(call.message, handle_steps, message_id, recipe_id)
+
+            elif current_step == 3:
+                # Получаем шаги рецепта
+                formatted_instructions = SQL_request("SELECT instructions FROM local_recipes WHERE lr_id=?", (recipe_id,), fetchone=True)[0]
+                markup = get_steps_keyboard(recipe_id)  # Клавиатура для этапа завершения рецепта
+
+                bot.edit_message_text(text=f"<b>Шаги:</b>\n{formatted_instructions}\n\nРецепт завершен!", chat_id=user_id, message_id=message_id, reply_markup=markup, parse_mode="HTML")
+
+        except Exception as e:
+            print(f"Ошибка в обработке continue_recipe_: {e}")
+
+
+    elif call.data.startswith("change_name"):
+        recipe_id = int(call.data.split("_")[2])
+        bot.edit_message_text("Кузя забыл название рецепта, введи заново!", chat_id=user_id, message_id=message_id, reply_markup=keyboard_markup)
+        bot.register_next_step_handler(call.message, handle_name, message_id, recipe_id)
+
+
+    elif call.data.startswith("change_ingredients"):
+        recipe_id = int(call.data.split("_")[2])
+        bot.edit_message_text("Кузя забыл состав рецепта, введи заново!", chat_id=user_id, message_id=message_id, reply_markup=keyboard_markup)
+        bot.register_next_step_handler(call.message, handle_ingredients, message_id, recipe_id)
+
+
+    if call.data.startswith("change_steps"):
+        recipe_id = int(call.data.split("_")[2])
+        current_steps = SQL_request("SELECT instructions FROM local_recipes WHERE lr_id=?", (recipe_id,), fetchone=True)[0]
+        bot.edit_message_text(f"Кузя не может вспомнить шаги! Введи их (минимум два шага, каждый с новой строки):",chat_id=user_id, message_id=message_id)
+        bot.register_next_step_handler(call.message, handle_steps, message_id=message_id, recipe_id=recipe_id, edit_mode=True)
+
+
+    elif call.data.startswith("show_recipe"):
+        recipe_id = int(call.data.split("_")[2])
+        recipe = SQL_request(
+            "SELECT recipe_name, instructions, ingredients FROM local_recipes WHERE lr_id=?", (recipe_id,),fetchone=True)
+
+        if recipe:
+            recipe_name, ingredients, instructions = recipe
+
+            markup = InlineKeyboardMarkup(row_width=1)
+            markup.add(
+                InlineKeyboardButton(text="💾 Записать", callback_data=f"save_recipe_{recipe_id}"),
+                InlineKeyboardButton(text="🗑 Стереть", callback_data=f"cancel_recipe_{recipe_id}")
+            )
+
+            bot.edit_message_text(chat_id=user_id, message_id=message_id, text=f"Готовый рецепт!\n\n<b>{recipe_name}</b>\n\n<b>Состав:</b>\n{ingredients}\n\n<b>Описание:</b>\n{instructions}", reply_markup=markup,parse_mode="HTML")
+
+
+    elif call.data.startswith("cancel_recipe_"):
+        try:
+            recipe_id = int(call.data.split("_")[2])
+            SQL_request("DELETE FROM local_recipes WHERE lr_id=?", (recipe_id,))
+
+            # Уведомляем пользователя об успешной отмене
+            bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text="Кузя передумал, рецепт не сохранен!")
+            bot.edit_message_text(chat_id=user_id, message_id=message_id, text="Ваши рецепты", reply_markup=keyboard_recipes)
+
+        except Exception as e:
+            print(f"Ошибка при удалении рецепта: {e}")
+
+
+    elif call.data.startswith("save_recipe_"):
+        try:
+            recipe_id = int(call.data.split("_")[2])
+            SQL_request("UPDATE local_recipes SET current_step=4, is_filled=2 WHERE lr_id=?", (recipe_id,))
+            bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text="Рецепт сохранен, Кузя доволен!")
+            bot.edit_message_text(chat_id=user_id, message_id=message_id, text="Ваши рецепты", reply_markup=keyboard_recipes)
+        except Exception as e:
+            print(f"Ошибка при сохранении рецепта: {e}")
+
+
+    if call.data == "back_recipe":
+        greeting = get_greeting(name)
+        bot.edit_message_text(chat_id=user_id, message_id=message_id, text=greeting, reply_markup=keyboard_main)
+
+
+print(f"{LOG}Бот запущен...")
+bot.polling(none_stop=True)
