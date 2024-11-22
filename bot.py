@@ -228,3 +228,31 @@ def handle_steps(message, message_id, recipe_id, edit_mode=False, attempt=1):
     except Exception as e:
         print(f"Ошибка в handle_steps: {e}")
 
+
+
+@bot.message_handler(commands=['start'])  # обработка команды start
+def start(message):
+    user_id = message.chat.id
+    message_id = message.message_id
+    username = message.chat.username
+    name = message.chat.first_name
+
+    times = now_time()
+    greeting = get_greeting(name)
+
+
+    user = SQL_request("SELECT * FROM users WHERE id = ?", (user_id,))
+
+    if not user:
+        SQL_request("""INSERT INTO users (id, message, username, name, time_registration) 
+            VALUES (?, ?, ?, ?, ?)""", (user_id, message_id+1, username, name, times))
+        bot.send_message(user_id, text=f"Добро пожаловать, {name}!", reply_markup=keyboard_main)
+        print(f"{LOG} Зарегистрирован новый пользователь")
+    else:
+        menu_id = SQL_request("SELECT message FROM users WHERE id = ?", (user_id,))  # получение id меню
+        try: bot.delete_message(message.chat.id, menu_id[0])  # обработка ошибки, если чат пустой, но пользователь есть в базе
+        except Exception as e: print(f"Ошибка: {e}")  # вывод текста ошибки
+        SQL_request("""UPDATE users SET message = ? WHERE id = ?""", (message_id+1, user_id))  # добавление id нового меню
+        bot.send_message(user_id, greeting, reply_markup=keyboard_main)
+        print(f"{LOG} Пользователь уже существует")
+    bot.delete_message(message.chat.id, message.message_id)
