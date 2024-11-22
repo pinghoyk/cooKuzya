@@ -229,6 +229,28 @@ def handle_steps(message, message_id, recipe_id, edit_mode=False, attempt=1):
         print(f"Ошибка в handle_steps: {e}")
 
 
+# Клавиатуры для продолжения рецепта
+def get_name_keyboard(recipe_id):
+    markup = InlineKeyboardMarkup()
+    markup.add(InlineKeyboardButton(text="✍️ Перезаписать название", callback_data=f"change_name_{recipe_id}"))
+    return markup
+
+
+def get_ingredients_keyboard(recipe_id):
+    markup = InlineKeyboardMarkup()
+    markup.add(InlineKeyboardButton(text="✍️ Перезаписать состав", callback_data=f"change_ingredients_{recipe_id}"))
+    return markup
+
+
+def get_steps_keyboard(recipe_id):
+    markup = InlineKeyboardMarkup()
+    markup.add(
+        InlineKeyboardButton(text="✍️ Перезаписать шаги", callback_data=f"change_steps_{recipe_id}"),
+        InlineKeyboardButton(text="📖 Показать рецепт", callback_data=f"show_recipe_{recipe_id}")
+        )
+    return markup
+
+
 
 @bot.message_handler(commands=['start'])  # обработка команды start
 def start(message):
