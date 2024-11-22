@@ -67,3 +67,36 @@ try:
     print(f"{LOG}База данных успешно инициализирована!")
 except sqlite3.Error as e:
     print(f"{LOG}Ошибка при работе с базой данных: {e}")
+
+
+# ФУНКЦИИ
+# Подключение к бд
+def SQL_request(request, params=(), fetchone=False):
+    with sqlite3.connect(DB_NAME) as conn:
+        cursor = conn.cursor()
+        cursor.execute(request, params)
+        if fetchone:
+            result = cursor.fetchone()
+        else:
+            result = cursor.fetchall()
+
+        cursor.close()
+        return result
+
+
+# Получение приветствия в зависимости от времени суток
+def get_greeting(name):
+    current_hour = datetime.now(pytz.timezone('Asia/Yekaterinburg')).hour
+    if 5 <= current_hour < 12:
+        return f"Доброе утро, {name}!"
+    elif 12 <= current_hour < 18:
+        return f"Добрый день, {name}!"
+    elif 18 <= current_hour < 23:
+        return f"Добрый вечер, {name}!"
+    else:
+        return f"Доброй ночи, {name}!"
+
+
+# Получение времени
+def now_time():
+    return datetime.now(pytz.timezone('Asia/Yekaterinburg')).strftime("%Y-%m-%d %H:%M:%S")
