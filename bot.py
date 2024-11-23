@@ -480,6 +480,32 @@ def callback_query(call):
             print(f"Ошибка при сохранении рецепта: {e}")
 
 
+    if call.data.startswith("page_"):
+        page = int(call.data.split("_")[1])
+        send_recipe_menu(call, user_id=call.from_user.id, show_favorites=False, page=page)
+
+    # поменяется
+    if call.data.startswith("recipe_"):
+        recipe_id = int(call.data.split("_")[1])
+        query = "SELECT recipe_name, ingredients, instructions FROM local_recipes WHERE lr_id = ?"
+        recipe = SQL_request(query, (recipe_id,), fetchone=True)
+        
+        if recipe:
+            recipe_name, ingredients, instructions = recipe
+            text = f"Рецепт: {recipe_name}\n\nИнгредиенты:\n{ingredients}\n\nШаги:\n{instructions}"
+            bot.send_message(call.message.chat.id, text)
+        else:
+            bot.answer_callback_query(call.id, "Рецепт не найден.")
+
+
+    if call.data == "create_recipe":
+        send_recipe_menu(call, user_id=call.from_user.id)
+
+
+    if call.data == "favorite_recipe":
+        send_recipe_menu(call, user_id=call.from_user.id, show_favorites=True, page=1)
+
+
     if call.data == "back_recipe":
         greeting = get_greeting(name)
         bot.edit_message_text(chat_id=user_id, message_id=message_id, text=greeting, reply_markup=keyboard_main)
