@@ -359,11 +359,6 @@ def callback_query(call):
     elif call.data == "btn_back":
         bot.edit_message_text(chat_id=user_id, message_id=message_id, text="Ваши рецепты", reply_markup=keyboard_recipes)
 
-
-    if call.data == "create_recipe":
-        show_recipes_with_pagination(user_id, call, page=1)
-
-
     if call.data == "add_recipe":
         unfinished_recipe = SQL_request("SELECT lr_id FROM local_recipes WHERE id=? AND is_filled=0", (user_id,), fetchone=True)
 
