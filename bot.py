@@ -101,9 +101,6 @@ def now_time():
     return datetime.now(pytz.timezone('Asia/Yekaterinburg')).strftime("%Y-%m-%d %H:%M:%S")
 
 
-
-
-
 # Получение названия рецепта
 def handle_name(message, message_id, recipe_id=None, edit_mode=False):
     user_id = message.chat.id
@@ -249,6 +246,75 @@ def get_steps_keyboard(recipe_id):
         InlineKeyboardButton(text="📖 Показать рецепт", callback_data=f"show_recipe_{recipe_id}")
         )
     return markup
+
+
+# Создает меню для показа рецептов с пагинацией (еще надо подкорректировать)
+def generate_recipe_menu(user_id, page=1, limit=10, show_favorites=False):
+    offset = (page - 1) * limit
+
+    if show_favorites:
+        query = """
+            SELECT lr.lr_id, lr.recipe_name
+            FROM favorite_recipes fr
+            JOIN local_recipes lr ON fr.recipe_id = lr.lr_id
+            WHERE fr.id = ? AND lr.is_filled = 1
+            LIMIT ? OFFSET ?
+        """
+        recipes = SQL_request(query, (user_id, limit, offset))
+        total_recipes_query = """
+            SELECT COUNT(*)
+            FROM favorite_recipes fr
+            JOIN local_recipes lr ON fr.recipe_id = lr.lr_id
+            WHERE fr.id = ? AND lr.is_filled = 1
+        """
+        total_recipes = SQL_request(total_recipes_query, (user_id,), fetchone=True)[0]
+    else:
+        query = "SELECT lr_id, recipe_name FROM local_recipes WHERE is_filled = 1 LIMIT ? OFFSET ?"
+        recipes = SQL_request(query, (limit, offset))
+        total_recipes_query = "SELECT COUNT(*) FROM local_recipes WHERE is_filled = 1"
+        total_recipes = SQL_request(total_recipes_query, fetchone=True)[0]
+
+    if not recipes:
+        return None
+
+    total_pages = (total_recipes + limit - 1) // limit
+    keyboard = InlineKeyboardMarkup(row_width=3)
+
+    for recipe_id, recipe_name in recipes:
+        keyboard.add(InlineKeyboardButton(text=recipe_name, callback_data=f"recipe_{recipe_id}"))
+
+    pagination_buttons = []
+    # Добавляем кнопку "Назад" при одной странице
+    if total_pages <= 1 and page == 1:
+        pagination_buttons.append(InlineKeyboardButton("◀️ Назад", callback_data="btn_back"))
+    # Добавляем пагинацию, если страниц больше 1
+    if total_pages > 1:
+        if page > 1:
+            pagination_buttons.append(InlineKeyboardButton("◀️ Назад", callback_data=f"page_{page-1}"))
+        pagination_buttons.append(InlineKeyboardButton(f"{page}/{total_pages}", callback_data="btn_back"))
+        if page < total_pages:
+            pagination_buttons.append(InlineKeyboardButton("Вперед ▶️", callback_data=f"page_{page+1}"))
+
+    if pagination_buttons:
+        keyboard.row(*pagination_buttons)
+    return keyboard
+
+
+def get_empty_message(show_favorites):
+    return "Кузе ничего не нравится! 😡" if show_favorites else "Кузя взял тетрадь, но она пуста! 😅"
+
+
+def send_recipe_menu(call, user_id, show_favorites=False, page=1):
+    # Генерация клавиатуры для указанной страницы
+    keyboard = generate_recipe_menu(user_id, page=page, limit=10, show_favorites=show_favorites)
+
+    if keyboard:
+        text = "Ваши избранные рецепты:" if show_favorites else "Ваши рецепты:"
+        bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text=text, reply_markup=keyboard)
+    else:
+        text = get_empty_message(show_favorites)
+        bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text=text, reply_markup=keyboard_markup)
+
 
 
 @bot.message_handler(commands=['start'])  # обработка команды start
