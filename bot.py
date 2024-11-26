@@ -617,7 +617,41 @@ def callback_query(call):
 
 
     if call.data == "zaglushka":
-        bot.answer_callback_query(call.id, text="О, ты нажал сюда... ты что-то ищешь?")
+        bot.answer_callback_query(call.id, text="Ты что, серьезно? Нажал сюда... и что теперь? 😅")
+
+
+    # edit budet!
+    if call.data.startswith("edit_"):
+        try:
+            recipe_id = int(call.data.split("_")[1])
+            user_id = call.message.chat.id
+
+            # Получаем текущие данные рецепта
+            recipe = SQL_request("SELECT recipe_name, ingredients, instructions FROM local_recipes WHERE lr_id=?", (recipe_id,), fetchone=True)
+            if not recipe:
+                bot.answer_callback_query(call.id, "Рецепт не найден!")
+                return
+
+            name, ingredients, instructions = recipe
+
+            # Показываем меню выбора редактирования
+            markup = InlineKeyboardMarkup(row_width=1)
+            markup.add(
+                InlineKeyboardButton("✏️ Название", callback_data=f"change_name_{recipe_id}"),
+                InlineKeyboardButton("📋 Состав", callback_data=f"change_ingredients_{recipe_id}"),
+                InlineKeyboardButton("📝 Шаги", callback_data=f"change_steps_{recipe_id}"),
+                InlineKeyboardButton("🗑 Стереть", callback_data=f"cancel_recipe_{recipe_id}"),
+                InlineKeyboardButton(text=" ◀️ Назад", callback_data="btn_back")
+            )
+            bot.edit_message_text(
+                f"<b>Что изменить?</b>",
+                chat_id=user_id,
+                message_id=call.message.message_id,
+                reply_markup=markup,
+                parse_mode="HTML"
+            )
+        except Exception as e:
+            print(f"Ошибка в edit_recipe: {e}")
 
 
     if call.data == "back_recipe":
