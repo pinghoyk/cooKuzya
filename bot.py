@@ -62,6 +62,16 @@ try:
                 FOREIGN KEY (id) REFERENCES users (id)
             );
         """)
+
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS favorite_recipes (
+                f_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                id INTEGER,
+                recipe_id INTEGER,
+                FOREIGN KEY (id) REFERENCES users (id)
+            );
+        """)
+        
         
         conn.commit()
     print(f"{LOG}База данных успешно инициализирована!")
@@ -277,26 +287,37 @@ def generate_recipe_menu(user_id, page=1, limit=10, show_favorites=False):
     if not recipes:
         return None
 
-    total_pages = (total_recipes + limit - 1) // limit
+    total_pages = (total_recipes + limit - 1) // limit  # Вычисляем общее количество страниц
     keyboard = InlineKeyboardMarkup(row_width=3)
 
     for recipe_id, recipe_name in recipes:
         keyboard.add(InlineKeyboardButton(text=recipe_name, callback_data=f"recipe_{recipe_id}"))
 
     pagination_buttons = []
-    # Добавляем кнопку "Назад" при одной странице
-    if total_pages <= 1 and page == 1:
-        pagination_buttons.append(InlineKeyboardButton("◀️ Назад", callback_data="btn_back"))
-    # Добавляем пагинацию, если страниц больше 1
+
     if total_pages > 1:
+        if page == 1:
+            pagination_buttons.append(InlineKeyboardButton("«", callback_data="btn_back"))
         if page > 1:
-            pagination_buttons.append(InlineKeyboardButton("◀️ Назад", callback_data=f"page_{page-1}"))
-        pagination_buttons.append(InlineKeyboardButton(f"{page}/{total_pages}", callback_data="btn_back"))
+            pagination_buttons.append(InlineKeyboardButton("«", callback_data=f"page_{page-1}"))
+        pagination_buttons.append(InlineKeyboardButton(f"{page}/{total_pages}", callback_data="zaglushka"))
         if page < total_pages:
-            pagination_buttons.append(InlineKeyboardButton("Вперед ▶️", callback_data=f"page_{page+1}"))
+            pagination_buttons.append(InlineKeyboardButton("»", callback_data=f"page_{page+1}"))
+        if page == total_pages:
+            pagination_buttons.append(InlineKeyboardButton("»", callback_data=f"btn_back"))
+    else:
+        if page == 1:
+            pagination_buttons.append(InlineKeyboardButton("«", callback_data="btn_back"))
+        if page > 1:
+            pagination_buttons.append(InlineKeyboardButton("«", callback_data=f"page_{page-1}"))
+        pagination_buttons.append(InlineKeyboardButton(f"{page}/{total_pages}", callback_data="zaglushka"))
+        if page < total_pages:
+            pagination_buttons.append(InlineKeyboardButton("»", callback_data=f"page_{page+1}"))
+
 
     if pagination_buttons:
         keyboard.row(*pagination_buttons)
+
     return keyboard
 
 
@@ -449,7 +470,7 @@ def callback_query(call):
                 InlineKeyboardButton(text="🗑 Стереть", callback_data=f"cancel_recipe_{recipe_id}")
             )
 
-            bot.edit_message_text(chat_id=user_id, message_id=message_id, text=f"Готовый рецепт!\n\n<b>{recipe_name}</b>\n\n<b>Состав:</b>\n{ingredients}\n\n<b>Описание:</b>\n{instructions}", reply_markup=markup,parse_mode="HTML")
+            bot.edit_message_text(chat_id=user_id, message_id=message_id, text=f"Готовый рецепт!\n\n<b>{recipe_name}</b>\n\n<b>Состав:</b>\n{instructions}\n\n<b>Описание:</b>\n{ingredients}", reply_markup=markup,parse_mode="HTML")
 
 
     elif call.data.startswith("cancel_recipe_"):
@@ -468,7 +489,7 @@ def callback_query(call):
     elif call.data.startswith("save_recipe_"):
         try:
             recipe_id = int(call.data.split("_")[2])
-            SQL_request("UPDATE local_recipes SET current_step=4, is_filled=2 WHERE lr_id=?", (recipe_id,))
+            SQL_request("UPDATE local_recipes SET current_step=3, is_filled=1 WHERE lr_id=?", (recipe_id,))
             bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text="Рецепт сохранен, Кузя доволен!")
             bot.edit_message_text(chat_id=user_id, message_id=message_id, text="Ваши рецепты", reply_markup=keyboard_recipes)
         except Exception as e:
