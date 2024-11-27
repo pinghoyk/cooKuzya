@@ -541,66 +541,57 @@ def callback_query(call):
 
     if call.data.startswith("page_"):
         page = int(call.data.split("_")[1])
-        send_recipe_menu(call, user_id=call.from_user.id, show_favorites=False, page=page)
+        is_favorites_menu = 'fav' in call.data  # Проверка наличия флага 'fav' в callback_data
+        send_recipe_menu(call, user_id=call.from_user.id, is_favorites_menu=is_favorites_menu, page=page)
 
 
     if call.data.startswith("recipe_"):
         recipe_id = int(call.data.split("_")[1])
-        keyboard, text = generate_recipe_screen(recipe_id, user_id=call.from_user.id, step=0)
+        is_favorites_menu = call.message.text.startswith("Ваши избранные рецепты:")
+        keyboard, text = generate_recipe_screen(recipe_id, user_id=call.from_user.id, step=0, is_favorites_menu=is_favorites_menu)
+
         if keyboard:
             bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text=text, reply_markup=keyboard, parse_mode="HTML")
         else:
-            print(call.id, "Рецепт не найден.")
+            bot.answer_callback_query(call.id, "Рецепт не найден.")
 
 
     if call.data == "create_recipe":
-        send_recipe_menu(call, user_id=call.from_user.id)
+        send_recipe_menu(call, user_id=call.from_user.id, is_favorites_menu=False)
 
 
     if call.data == "favorite_recipe":
-        send_recipe_menu(call, user_id=call.from_user.id, show_favorites=True, page=1)
+        send_recipe_menu(call, user_id=call.from_user.id, is_favorites_menu=True, page=1)
 
 
     if call.data.startswith("step_"):
-        _, recipe_id, step = call.data.split("_")
-        recipe_id, step = int(recipe_id), int(step)
-        keyboard, text = generate_recipe_screen(recipe_id, user_id=call.from_user.id, step=step)
+        _, recipe_id, step, is_favorites_menu_flag = call.data.split("_")
+        recipe_id, step, is_favorites_menu_flag = int(recipe_id), int(step), bool(int(is_favorites_menu_flag))
+        keyboard, text = generate_recipe_screen(recipe_id, user_id=call.from_user.id, step=step, is_favorites_menu=is_favorites_menu_flag)
+
         bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text=text, reply_markup=keyboard, parse_mode="HTML")
 
 
-    if call.data.startswith("fav_"):
+    if call.data.startswith("fav_add_") or call.data.startswith("fav_remove_"):
         parts = call.data.split("_")
-        if len(parts) != 3:
-            raise ValueError("Invalid callback data format. Expected format: fav_<recipe_id>_<is_favorite>")
+        if len(parts) < 3:
+            raise ValueError("Invalid callback data format. Expected format: fav_<action>_<recipe_id>_<menu_type>")
 
-        _, recipe_id, is_favorite = parts
-        recipe_id = int(recipe_id)  # Преобразуем ID рецепта в число
-        is_favorite = bool(int(is_favorite))  # Преобразуем статус в булево значение
+        _, action, recipe_id, menu_type = parts
+        recipe_id = int(recipe_id)
 
-        # Работа с базой данных: добавление или удаление рецепта из избранного
-        if is_favorite:
-            query = "DELETE FROM favorite_recipes WHERE user_id = ? AND recipe_id = ?"
-            SQL_request(query, (call.from_user.id, recipe_id))
-            is_favorite = False  # После удаления, состояние изменяется
-        else:
+        # Добавление или удаление из избранного
+        if action == "add":
             query = "INSERT INTO favorite_recipes (user_id, recipe_id) VALUES (?, ?)"
             SQL_request(query, (call.from_user.id, recipe_id))
-            is_favorite = True  # После добавления, состояние изменяется
+        elif action == "remove":
+            query = "DELETE FROM favorite_recipes WHERE user_id = ? AND recipe_id = ?"
+            SQL_request(query, (call.from_user.id, recipe_id))
 
-        # Генерируем текст для кнопки
-        favorite_button_text = "❤️ В избранном" if is_favorite else "🤍 В избранное"
-        # Получаем текущую клавиатуру
-        current_keyboard = call.message.reply_markup.keyboard
-
-        # Заменяем только кнопку "В избранное" на обновленную
-        for row in current_keyboard:
-            for button in row:
-                if button.callback_data and button.callback_data.startswith("fav_"):
-                    button.text = favorite_button_text
-                    button.callback_data = f"fav_{recipe_id}_{int(is_favorite)}"
-
-        # Обновляем клавиатуру
-        bot.edit_message_reply_markup(chat_id=call.message.chat.id, message_id=call.message.message_id, reply_markup=InlineKeyboardMarkup(current_keyboard))
+        # Определяем, это локальное или избранное меню
+        is_favorites_menu = menu_type == "favorites"
+        keyboard, text = generate_recipe_screen(recipe_id, user_id=call.from_user.id, step=0, is_favorites_menu=is_favorites_menu)
+        bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text=text, reply_markup=keyboard, parse_mode="HTML")
 
 
     if call.data == "zaglushka":
