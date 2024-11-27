@@ -315,20 +315,15 @@ def generate_recipe_menu(call, user_id, page=1, limit=10, show_favorites=False):
     return keyboard
 
 
-def get_empty_message(show_favorites):
-    return "Кузе ничего не нравится! 😡" if show_favorites else "Кузя взял тетрадь, но она пуста! 😅"
-
-
-def send_recipe_menu(call, user_id, show_favorites=False, page=1):
-    # Генерация клавиатуры для указанной страницы
-    keyboard = generate_recipe_menu(user_id, page=page, limit=10, show_favorites=show_favorites)
-
+def send_recipe_menu(call, user_id, is_favorites_menu=False, page=1):
+    keyboard = generate_recipe_menu(call, user_id, page=page, limit=10, show_favorites=is_favorites_menu)
+    
     if keyboard:
-        text = "Ваши избранные рецепты:" if show_favorites else "Ваши рецепты:"
+        text = "Ваши избранные рецепты:" if is_favorites_menu else "Ваши рецепты:"
         bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text=text, reply_markup=keyboard)
     else:
-        text = get_empty_message(show_favorites)
-        bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text=text, reply_markup=keyboard_markup)
+        text = "Кузя взял тетрадь, но она пуста! 😅" if not is_favorites_menu else "Кузе ничего не нравится! 😡"
+        bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text=text, reply_markup=keyboard_markup) 
 
 
 # Показ содержимого рецепта
