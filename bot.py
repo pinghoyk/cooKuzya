@@ -121,9 +121,9 @@ def handle_name(message, message_id, recipe_id=None, edit_mode=False):
         return
 
     if edit_mode:
-        SQL_request("UPDATE local_recipes SET recipe_name=? WHERE lr_id=?", (recipe_name, recipe_id))
-        current_step = SQL_request("SELECT current_step FROM local_recipes WHERE lr_id=?", (recipe_id,), fetchone=True)
-
+        SQL_request("UPDATE local_recipes SET recipe_name=? WHERE lr_id=? AND user_id=?", (recipe_name, recipe_id, user_id))
+        current_step = SQL_request("SELECT current_step FROM local_recipes WHERE lr_id=? AND user_id=?", (recipe_id, user_id), fetchone=True)
+        
         if current_step:
             current_step = current_step[0]
             if current_step == 2:
@@ -132,15 +132,16 @@ def handle_name(message, message_id, recipe_id=None, edit_mode=False):
                 bot.register_next_step_handler(message, handle_steps, message_id, recipe_id)
         return
 
-    recipe = SQL_request("SELECT lr_id, current_step FROM local_recipes WHERE id=? AND is_filled=0", (user_id,), fetchone=True)
+    # Проверка, что рецепт принадлежит пользователю
+    recipe = SQL_request("SELECT lr_id, current_step FROM local_recipes WHERE user_id=? AND is_filled=0", (user_id,), fetchone=True)
 
     if recipe:
         # Если рецепт существует, обновляем его название и сбрасываем шаг на 1
         recipe_id, current_step = recipe
-        SQL_request("UPDATE local_recipes SET recipe_name=?, current_step=1 WHERE lr_id=?", (recipe_name, recipe_id))
+        SQL_request("UPDATE local_recipes SET recipe_name=?, current_step=1 WHERE lr_id=? AND user_id=?", (recipe_name, recipe_id, user_id))
     else:
         # Если рецепта нет, создаем новый
-        SQL_request("INSERT INTO local_recipes (recipe_name, id, is_filled, current_step) VALUES (?, ?, 0, 1)",(recipe_name, user_id))
+        SQL_request("INSERT INTO local_recipes (recipe_name, user_id, is_filled, current_step) VALUES (?, ?, 0, 1)", (recipe_name, user_id))
         recipe_id = SQL_request("SELECT last_insert_rowid()", fetchone=True)[0]
 
     markup = InlineKeyboardMarkup()
@@ -148,7 +149,7 @@ def handle_name(message, message_id, recipe_id=None, edit_mode=False):
 
     bot.edit_message_text(text=f"Название: <b>{recipe_name}</b>\n\nКузя записывает состав:", chat_id=user_id, message_id=message_id, reply_markup=markup, parse_mode="HTML")
 
-    recipe_id = SQL_request("SELECT lr_id FROM local_recipes WHERE id=? AND is_filled=0", (user_id,), fetchone=True)[0]
+    recipe_id = SQL_request("SELECT lr_id FROM local_recipes WHERE user_id=? AND is_filled=0", (user_id,), fetchone=True)[0]
     bot.delete_message(chat_id=message.chat.id, message_id=message.message_id)
     bot.register_next_step_handler(message, handle_ingredients, message_id, recipe_id)
 
@@ -163,77 +164,60 @@ def handle_ingredients(message, message_id, recipe_id, edit_mode=False):
         return
 
     if edit_mode:
-        SQL_request("UPDATE local_recipes SET ingredients=? WHERE lr_id=?", (ingredients, recipe_id))
+        SQL_request("UPDATE local_recipes SET ingredients=? WHERE lr_id=? AND user_id=?", (ingredients, recipe_id, user_id))
         bot.register_next_step_handler(message, handle_steps, message_id, recipe_id)
         return
 
-    recipe = SQL_request("SELECT lr_id, current_step FROM local_recipes WHERE lr_id=? AND is_filled=0", (recipe_id,), fetchone=True)
+    recipe = SQL_request("SELECT lr_id, current_step FROM local_recipes WHERE lr_id=? AND user_id=? AND is_filled=0", (recipe_id, user_id), fetchone=True)
 
     if recipe:
-        # Если рецепт найден, обновляем ингредиенты
-        SQL_request("UPDATE local_recipes SET ingredients=?, current_step=2 WHERE lr_id=?", (ingredients, recipe_id))
+        SQL_request("UPDATE local_recipes SET ingredients=?, current_step=2 WHERE lr_id=? AND user_id=?", (ingredients, recipe_id, user_id))
 
         markup = InlineKeyboardMarkup()
         markup.add(InlineKeyboardButton(text="✍️ Перезаписать состав", callback_data=f"change_ingredients_{recipe_id}"))
 
-        bot.edit_message_text(f"<b>Состав:</b> {ingredients}\n\nКузя готов записать шаги! Введите их, каждый на новой строке:", chat_id=user_id, message_id=message_id, reply_markup=markup,parse_mode="HTML")
-        bot.delete_message(message.chat.id, message.message_id)
+        bot.edit_message_text(f"<b>Состав:</b> {ingredients}\n\nКузя готов записать шаги! Введите их, каждый на новой строке:", chat_id=user_id, message_id=message_id, reply_markup=markup, parse_mode="HTML")
+
+        bot.delete_message(chat_id=user_id, message_id=message.message_id)
         bot.register_next_step_handler(message, handle_steps, message_id, recipe_id)
 
 
 # Получение шагов рецепта
 def handle_steps(message, message_id, recipe_id, edit_mode=False, attempt=1):
-    try:
-        user_id = message.chat.id
-        instructions = message.text.strip() if message.text else ""
-        steps = [step.strip() for step in instructions.split("\n") if step.strip()]
+    user_id = message.chat.id
+    instructions = message.text.strip()
 
-        if instructions.lower() == '/start':
-            start(message)
-            return
+    if instructions.lower() == '/start':
+        start(message)
+        return
 
-        # Проверяем на минимальное количество шагов и их корректность
-        if len(steps) < 2:
-            response_text = (
-                "Кузя ждет хотя бы два шага! Введите их снова (каждый шаг с новой строки):"
-                if attempt == 1 else
-                "Кузя снова напоминает: нужно хотя бы два шага! Попробуйте еще раз:"
-            )
-            msg = bot.edit_message_text(chat_id=user_id, message_id=message_id, text=response_text)
-            bot.delete_message(chat_id=user_id, message_id=message.message_id)
-            bot.register_next_step_handler(msg, handle_steps, message_id, recipe_id, edit_mode, attempt + 1)
-            return
+    steps = [step.strip() for step in instructions.split("\n") if step.strip()]
 
-        formatted_instructions = "\n".join(steps)
+    if len(steps) < 2:
+        response_text = (
+            "Кузя ждет хотя бы два шага! Введите их снова (каждый шаг с новой строки):"
+            if attempt == 1 else
+            "Кузя снова напоминает: нужно хотя бы два шага! Попробуйте еще раз:"
+        )
+        bot.edit_message_text(chat_id=user_id, message_id=message_id, text=response_text)
+        bot.register_next_step_handler(message, handle_steps, message_id, recipe_id, edit_mode, attempt + 1)
+        return
 
-        if edit_mode:
-            # Обновляем шаги в базе данных
-            SQL_request("UPDATE local_recipes SET instructions=? WHERE lr_id=?", (formatted_instructions, recipe_id))
+    formatted_instructions = "\n".join(steps)
 
-            markup = InlineKeyboardMarkup(row_width=1)
-            markup.add(
-                InlineKeyboardButton(text="✍️ Перезаписать шаги", callback_data=f"change_steps_{recipe_id}"),
-                InlineKeyboardButton(text="📔 Показать рецепт", callback_data=f"show_recipe_{recipe_id}")
-            )
+    if edit_mode:
+        SQL_request("UPDATE local_recipes SET instructions=? WHERE lr_id=? AND user_id=?", (formatted_instructions, recipe_id, user_id))
+    else:
+        SQL_request("UPDATE local_recipes SET instructions=?, is_filled=1, current_step=3 WHERE lr_id=? AND user_id=?", (formatted_instructions, recipe_id, user_id))
 
-            bot.edit_message_text(chat_id=user_id, message_id=message_id, text=f"<b>Шаги:</b>\n{formatted_instructions}", reply_markup=markup, parse_mode="HTML")
-        else:
-            # Добавляем новые шаги и помечаем рецепт как завершенный
-            SQL_request("UPDATE local_recipes SET instructions=?, is_filled=1, current_step=3 WHERE lr_id=?", (formatted_instructions, recipe_id))
+    markup = InlineKeyboardMarkup(row_width=1)
+    markup.add(
+        InlineKeyboardButton(text="✍️ Перезаписать шаги", callback_data=f"change_steps_{recipe_id}"),
+        InlineKeyboardButton(text="📔 Показать рецепт", callback_data=f"show_recipe_{recipe_id}")
+    )
 
-            markup = InlineKeyboardMarkup(row_width=1)
-            markup.add(
-                InlineKeyboardButton(text="✍️ Перезаписать шаги", callback_data=f"change_steps_{recipe_id}"),
-                InlineKeyboardButton(text="📔 Показать рецепт", callback_data=f"show_recipe_{recipe_id}")
-            )
-
-            bot.edit_message_text(chat_id=user_id, message_id=message_id, text=f"<b>Шаги:</b>\n{formatted_instructions}\n\nКузя выдохнул... рецепт писать больше не нужно было!", reply_markup=markup, parse_mode="HTML")
-
-        # Удаляем сообщение пользователя
-        if message and message.message_id:
-            bot.delete_message(chat_id=user_id, message_id=message.message_id)
-    except Exception as e:
-        print(f"Ошибка в handle_steps: {e}")
+    bot.edit_message_text(f"<b>Шаги:</b>\n{formatted_instructions}\n\nКузя выдохнул... рецепт писать больше не нужно было!", chat_id=user_id, message_id=message_id, reply_markup=markup, parse_mode="HTML")
+    bot.delete_message(chat_id=user_id, message_id=message.message_id)
 
 
 # Клавиатуры для продолжения рецепта
@@ -258,31 +242,47 @@ def get_steps_keyboard(recipe_id):
     return markup
 
 
-# Создает меню для показа рецептов с пагинацией (еще надо подкорректировать)
+# Создает меню для показа рецептов с пагинацией
 def generate_recipe_menu(user_id, page=1, limit=10, show_favorites=False):
     offset = (page - 1) * limit
 
     if show_favorites:
+        # Запрос для получения списка избранных рецептов
         query = """
-            SELECT lr.lr_id, lr.recipe_name
-            FROM favorite_recipes fr
-            JOIN local_recipes lr ON fr.recipe_id = lr.lr_id
-            WHERE fr.id = ? AND lr.is_filled = 1
+            SELECT lr.lr_id, lr.recipe_name 
+            FROM favorite_recipes fr 
+            JOIN local_recipes lr ON fr.recipe_id = lr.lr_id 
+            WHERE fr.user_id = ? AND lr.is_filled = 1 
             LIMIT ? OFFSET ?
         """
         recipes = SQL_request(query, (user_id, limit, offset))
+        
+        # Запрос для подсчета общего количества избранных рецептов
         total_recipes_query = """
-            SELECT COUNT(*)
-            FROM favorite_recipes fr
-            JOIN local_recipes lr ON fr.recipe_id = lr.lr_id
-            WHERE fr.id = ? AND lr.is_filled = 1
+            SELECT COUNT(*) 
+            FROM favorite_recipes fr 
+            JOIN local_recipes lr ON fr.recipe_id = lr.lr_id 
+            WHERE fr.user_id = ? AND lr.is_filled = 1
         """
         total_recipes = SQL_request(total_recipes_query, (user_id,), fetchone=True)[0]
     else:
-        query = "SELECT lr_id, recipe_name FROM local_recipes WHERE is_filled = 1 LIMIT ? OFFSET ?"
-        recipes = SQL_request(query, (limit, offset))
-        total_recipes_query = "SELECT COUNT(*) FROM local_recipes WHERE is_filled = 1"
-        total_recipes = SQL_request(total_recipes_query, fetchone=True)[0]
+        # Запрос для получения обычных рецептов
+        query = """
+            SELECT lr_id, recipe_name 
+            FROM local_recipes 
+            WHERE is_filled = 1 AND user_id = ? 
+            LIMIT ? OFFSET ?
+        """
+        recipes = SQL_request(query, (user_id, limit, offset))
+        
+        # Запрос для подсчета общего количества обычных рецептов
+        total_recipes_query = """
+            SELECT COUNT(*) 
+            FROM local_recipes 
+            WHERE is_filled = 1 AND user_id = ?
+        """
+        total_recipes = SQL_request(total_recipes_query, (user_id,), fetchone=True)[0]
+
 
     if not recipes:
         return None
@@ -339,8 +339,8 @@ def send_recipe_menu(call, user_id, show_favorites=False, page=1):
 
 # Показ содержимого рецепта
 def generate_recipe_screen(recipe_id, user_id, step=0):
-    query = "SELECT recipe_name, ingredients, instructions FROM local_recipes WHERE lr_id = ?"
-    recipe = SQL_request(query, (recipe_id,), fetchone=True)
+    query = "SELECT recipe_name, ingredients, instructions FROM local_recipes WHERE lr_id = ? AND user_id = ?"
+    recipe = SQL_request(query, (recipe_id, user_id), fetchone=True)
 
     if not recipe:
         return None, "Рецепт не найден."
@@ -356,7 +356,7 @@ def generate_recipe_screen(recipe_id, user_id, step=0):
         text = f"Рецепт: <b>{recipe_name}</b>\n\n<b>Ингредиенты:</b>\n{ingredients}"
         
         # Проверяем, есть ли рецепт в избранном
-        query = "SELECT 1 FROM favorite_recipes WHERE id = ? AND recipe_id = ?"
+        query = "SELECT 1 FROM favorite_recipes WHERE user_id = ? AND recipe_id = ?"
         is_favorite = SQL_request(query, (user_id, recipe_id), fetchone=True) is not None
         favorite_button_text = "❤️ В избранном" if is_favorite else "🤍 В избранное"
         
@@ -391,7 +391,6 @@ def generate_recipe_screen(recipe_id, user_id, step=0):
         keyboard.row(*nav_buttons)
 
     return keyboard, text
-
 
 
 @bot.message_handler(commands=['start'])  # обработка команды start
@@ -437,7 +436,7 @@ def callback_query(call):
         bot.edit_message_text(chat_id=user_id, message_id=message_id, text="Ваши рецепты", reply_markup=keyboard_recipes)
 
     if call.data == "add_recipe":
-        unfinished_recipe = SQL_request("SELECT lr_id FROM local_recipes WHERE id=? AND is_filled=0", (user_id,), fetchone=True)
+        unfinished_recipe = SQL_request("SELECT lr_id FROM local_recipes WHERE user_id=? AND is_filled=0", (user_id,), fetchone=True)
 
         if unfinished_recipe:
             recipe_id = unfinished_recipe[0]
@@ -514,8 +513,7 @@ def callback_query(call):
 
     elif call.data.startswith("show_recipe"):
         recipe_id = int(call.data.split("_")[2])
-        recipe = SQL_request(
-            "SELECT recipe_name, instructions, ingredients FROM local_recipes WHERE lr_id=?", (recipe_id,),fetchone=True)
+        recipe = SQL_request("SELECT recipe_name, instructions, ingredients FROM local_recipes WHERE lr_id=? AND user_id=?", (recipe_id, user_id), fetchone=True)
 
         if recipe:
             recipe_name, ingredients, instructions = recipe
@@ -532,7 +530,7 @@ def callback_query(call):
     elif call.data.startswith("cancel_recipe_"):
         try:
             recipe_id = int(call.data.split("_")[2])
-            SQL_request("DELETE FROM local_recipes WHERE lr_id=?", (recipe_id,))
+            SQL_request("DELETE FROM local_recipes WHERE lr_id=? AND user_id=?", (recipe_id, user_id))
 
             # Уведомляем пользователя об успешной отмене
             bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text="Кузя передумал, рецепт не сохранен!")
@@ -545,7 +543,7 @@ def callback_query(call):
     elif call.data.startswith("save_recipe_"):
         try:
             recipe_id = int(call.data.split("_")[2])
-            SQL_request("UPDATE local_recipes SET current_step=3, is_filled=1 WHERE lr_id=?", (recipe_id,))
+            SQL_request("UPDATE local_recipes SET current_step=3, is_filled=1 WHERE lr_id=? AND user_id=?", (recipe_id, user_id))
             bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text="Рецепт сохранен, Кузя доволен!")
             bot.edit_message_text(chat_id=user_id, message_id=message_id, text="Ваши рецепты", reply_markup=keyboard_recipes)
         except Exception as e:
@@ -592,11 +590,11 @@ def callback_query(call):
 
         # Работа с базой данных: добавление или удаление рецепта из избранного
         if is_favorite:
-            query = "DELETE FROM favorite_recipes WHERE id = ? AND recipe_id = ?"
+            query = "DELETE FROM favorite_recipes WHERE user_id = ? AND recipe_id = ?"
             SQL_request(query, (call.from_user.id, recipe_id))
             is_favorite = False  # После удаления, состояние изменяется
         else:
-            query = "INSERT INTO favorite_recipes (id, recipe_id) VALUES (?, ?)"
+            query = "INSERT INTO favorite_recipes (user_id, recipe_id) VALUES (?, ?)"
             SQL_request(query, (call.from_user.id, recipe_id))
             is_favorite = True  # После добавления, состояние изменяется
 
