@@ -42,12 +42,12 @@ try:
         cursor = conn.cursor()
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS users (
-                id INTEGER,
+                id INTEGER PRIMARY KEY,
                 message INTEGER,
                 username TEXT,
                 name TEXT,
-                time_registration TIMESTAMP
-            )
+                time_registration TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
         """)
 
         cursor.execute("""
@@ -56,19 +56,19 @@ try:
                 recipe_name TEXT,
                 ingredients TEXT,
                 instructions TEXT,
-                id INTEGER,
-                is_filled INTEGER DEFAULT 0,  -- 0 - не заполнен, 1 - полностью заполнен
-                current_step INTEGER DEFAULT 0,  -- 0 - нет заполнения, 1 - заполнено название, 2 - ингредиенты и т.д.
-                FOREIGN KEY (id) REFERENCES users (id)
+                user_id INTEGER,
+                is_filled INTEGER DEFAULT 0,
+                current_step INTEGER DEFAULT 0,
+                FOREIGN KEY (user_id) REFERENCES users (id)
             );
         """)
 
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS favorite_recipes (
                 f_id INTEGER PRIMARY KEY AUTOINCREMENT,
-                id INTEGER,
+                user_id INTEGER,
                 recipe_id INTEGER,
-                FOREIGN KEY (id) REFERENCES users (id)
+                FOREIGN KEY (user_id) REFERENCES users (id)
             );
         """)
         
