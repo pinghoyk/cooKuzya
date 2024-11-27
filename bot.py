@@ -327,7 +327,7 @@ def send_recipe_menu(call, user_id, is_favorites_menu=False, page=1):
 
 
 # Показ содержимого рецепта
-def generate_recipe_screen(recipe_id, user_id, step=0):
+def generate_recipe_screen(recipe_id, user_id, step=0, is_favorites_menu=False):
     query = "SELECT recipe_name, ingredients, instructions FROM local_recipes WHERE lr_id = ? AND user_id = ?"
     recipe = SQL_request(query, (recipe_id, user_id), fetchone=True)
 
@@ -339,42 +339,42 @@ def generate_recipe_screen(recipe_id, user_id, step=0):
     total_steps = len(instructions)
     keyboard = InlineKeyboardMarkup(row_width=1)
 
-
-    # Первый экран: название и состав
     if step == 0:
         text = f"Рецепт: <b>{recipe_name}</b>\n\n<b>Ингредиенты:</b>\n{ingredients}"
         
-        # Проверяем, есть ли рецепт в избранном
         query = "SELECT 1 FROM favorite_recipes WHERE user_id = ? AND recipe_id = ?"
         is_favorite = SQL_request(query, (user_id, recipe_id), fetchone=True) is not None
-        favorite_button_text = "❤️ В избранном" if is_favorite else "🤍 В избранное"
-        
-        # Добавляем кнопку "В избранное" или "Удалить из избранного"
-        keyboard.add(InlineKeyboardButton(favorite_button_text, callback_data=f"fav_{recipe_id}_{int(is_favorite)}"),)
 
-        if not is_favorite:
+        if is_favorite:
+            keyboard.add(InlineKeyboardButton(
+                "❤️ Удалить из избранного",
+                callback_data=f"fav_remove_{recipe_id}_{'favorites' if is_favorites_menu else 'local'}"
+            ))
+        else:
+            keyboard.add(InlineKeyboardButton(
+                "🤍 В избранное",
+                callback_data=f"fav_add_{recipe_id}_{'favorites' if is_favorites_menu else 'local'}"
+            ))
+
+        if not is_favorites_menu:
             keyboard.add(InlineKeyboardButton("✍️ Изменить", callback_data=f"edit_{recipe_id}"))
-        if is_favorite: # Если рецепт в избранном, назад ведет к меню избранных
-            keyboard.row(
-                InlineKeyboardButton("«", callback_data="favorite_recipe"),  # Возврат в меню избранных рецептов
-                InlineKeyboardButton("»", callback_data=f"step_{recipe_id}_1")
-            )
-        else: # Если рецепт не в избранном, назад ведет к меню создания рецепта
-            keyboard.row(
-                InlineKeyboardButton("«", callback_data="create_recipe"),  # Возврат на создание рецепта
-                InlineKeyboardButton("»", callback_data=f"step_{recipe_id}_1")
-            )
 
+        back_callback = "favorite_recipe" if is_favorites_menu else "create_recipe"
+        keyboard.row(
+            InlineKeyboardButton("«", callback_data=back_callback),
+            InlineKeyboardButton("»", callback_data=f"step_{recipe_id}_1_{int(is_favorites_menu)}")
+        )
     else:
         current_step = instructions[step - 1]
         text = f"Шаг {step}/{total_steps}:\n{current_step}"
         nav_buttons = []
-        if step == 1:
-            nav_buttons.append(InlineKeyboardButton("«", callback_data=f"step_{recipe_id}_{step - 1}"))
         if step > 1:
-            nav_buttons.append(InlineKeyboardButton("«", callback_data=f"step_{recipe_id}_{step - 1}"))
+            nav_buttons.append(InlineKeyboardButton("«", callback_data=f"step_{recipe_id}_{step - 1}_{int(is_favorites_menu)}"))
+        if step == 1:
+            nav_buttons.append(InlineKeyboardButton("«", callback_data=f"step_{recipe_id}_{step - 1}_{int(is_favorites_menu)}"))
+
         if step < total_steps:
-            nav_buttons.append(InlineKeyboardButton("»", callback_data=f"step_{recipe_id}_{step + 1}"))
+            nav_buttons.append(InlineKeyboardButton("»", callback_data=f"step_{recipe_id}_{step + 1}_{int(is_favorites_menu)}"))
         else:
             nav_buttons.append(InlineKeyboardButton("Готово ✅", callback_data="btn_back"))
         keyboard.row(*nav_buttons)
