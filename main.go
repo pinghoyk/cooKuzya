@@ -112,3 +112,5 @@ func main() {
 			update.Message.From.ID,
 			update.Message.Text,
 		)
+
+		if update.Message.IsCommand() {
