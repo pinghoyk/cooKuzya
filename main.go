@@ -73,3 +73,13 @@ func main() {
 	if err != nil {
 		log.Fatalf("Ошибка загрузки .env: %v", err)
 	}
+
+	token := os.Getenv("BOT_TOKEN")
+	if token == "" {
+		log.Fatal("BOT_TOKEN не установлен в .env")
+	}
+
+	bot, err := tgbotapi.NewBotAPI(token)
+	if err != nil {
+		log.Panicf("Ошибка инициализации бота: %v", err)
+	}
