@@ -105,3 +105,10 @@ func main() {
 		if update.Message == nil {
 			continue
 		}
+
+		log.Printf(
+			"[%s][%d] %s",
+			time.Now().Format(time.DateTime),
+			update.Message.From.ID,
+			update.Message.Text,
+		)
