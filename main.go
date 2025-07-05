@@ -52,3 +52,13 @@ func loadLocale(path string) (*Locale, error) {
 	err = json.Unmarshal(file, &locale)
 	return &locale, err
 }
+
+// Заменяет плейсхолдеры в строке значениями из map
+func formatMessage(template string, params map[string]string) string {
+	result := template
+	for key, value := range params {
+		placeholder := "{" + key + "}"
+		result = strings.ReplaceAll(result, placeholder, value)
+	}
+	return result
+}
