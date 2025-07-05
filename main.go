@@ -114,3 +114,15 @@ func main() {
 		)
 
 		if update.Message.IsCommand() {
+			switch update.Message.Command() {
+			case "start":
+				// Форматирование приветствия с именем пользователя
+				messageText := formatMessage(locale.Bot.Welcome, map[string]string{
+					"name": update.Message.From.FirstName,
+				})
+
+				msg := tgbotapi.NewMessage(update.Message.Chat.ID, messageText)
+
+				if _, err := bot.Send(msg); err != nil {
+					log.Printf("Ошибка отправки: %v", err)
+				}
