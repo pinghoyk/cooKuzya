@@ -40,3 +40,15 @@ type CommandsLocale struct {
 	Start string `json:"start"`
 	Help  string `json:"help"`
 }
+
+// Загружает локализацию из файла
+func loadLocale(path string) (*Locale, error) {
+	file, err := os.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+
+	var locale Locale
+	err = json.Unmarshal(file, &locale)
+	return &locale, err
+}
