@@ -136,3 +136,16 @@ func main() {
 			}
 			continue
 		}
+
+		// Обработка обычных сообщений
+		response := tgbotapi.NewMessage(
+			update.Message.Chat.ID,
+			"Вы сказали: "+update.Message.Text,
+		)
+		response.ReplyToMessageID = update.Message.MessageID
+
+		if _, err := bot.Send(response); err != nil {
+			log.Printf("Ошибка отправки: %v", err)
+		}
+	}
+}
