@@ -86,3 +86,13 @@ func main() {
 
 	bot.Debug = true
 	log.Printf("Бот %s запущен", bot.Self.UserName)
+
+	// Настройка команд бота
+	commands := []tgbotapi.BotCommand{
+		{Command: "start", Description: locale.Commands.Start},
+		{Command: "help", Description: locale.Commands.Help},
+	}
+	_, err = bot.Request(tgbotapi.NewSetMyCommands(commands...))
+	if err != nil {
+		log.Printf("Ошибка установки команд: %v", err)
+	}
