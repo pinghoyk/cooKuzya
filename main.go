@@ -62,3 +62,9 @@ func formatMessage(template string, params map[string]string) string {
 	}
 	return result
 }
+
+func main() {
+	locale, err := loadLocale("locales.json")  // Загрузка локализации
+	if err != nil {
+		log.Fatalf("Ошибка загрузки локализации: %v", err)
+	}
