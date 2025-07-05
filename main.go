@@ -83,3 +83,6 @@ func main() {
 	if err != nil {
 		log.Panicf("Ошибка инициализации бота: %v", err)
 	}
+
+	bot.Debug = true
+	log.Printf("Бот %s запущен", bot.Self.UserName)
