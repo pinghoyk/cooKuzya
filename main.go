@@ -126,3 +126,13 @@ func main() {
 				if _, err := bot.Send(msg); err != nil {
 					log.Printf("Ошибка отправки: %v", err)
 				}
+
+			case "help":
+				msg := tgbotapi.NewMessage(update.Message.Chat.ID, locale.Bot.Help)
+				
+				if _, err := bot.Send(msg); err != nil {
+					log.Printf("Ошибка отправки: %v", err)
+				}
+			}
+			continue
+		}
