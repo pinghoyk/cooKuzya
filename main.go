@@ -68,3 +68,8 @@ func main() {
 	if err != nil {
 		log.Fatalf("Ошибка загрузки локализации: %v", err)
 	}
+
+	err = godotenv.Load()  // Загрузка переменных их .env
+	if err != nil {
+		log.Fatalf("Ошибка загрузки .env: %v", err)
+	}
