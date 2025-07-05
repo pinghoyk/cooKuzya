@@ -96,3 +96,7 @@ func main() {
 	if err != nil {
 		log.Printf("Ошибка установки команд: %v", err)
 	}
+
+	u := tgbotapi.NewUpdate(0)
+	u.Timeout = 30
+	updates := bot.GetUpdatesChan(u)
