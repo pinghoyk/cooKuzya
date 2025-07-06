@@ -101,13 +101,7 @@ func main() {
 		log.Printf("Ошибка установки команд %v", err)
 	}
 
-	u := tgbotapi.NewUpdate(0)
-	u.Timeout = 30
-	updates := bot.GetUpdatesChan(u)
 
-	for update := range updates {
-		if update.Message == nil {
-			continue
 	// Храним ID последнего активного меню
 		var menuMessages = make(map[int64]int)
 		var menuMutex sync.Mutex
@@ -125,6 +119,75 @@ func main() {
 				delete(menuMessages, chatID)
 			}
 		}
+
+		// Функция отправки стартового меню
+		sendStartMenu := func(chatID int64, firstName string) {
+			deletePreviousMenu(chatID)
+
+			messageText := formatMessage(locale.Bot.Welcome, map[string]string{
+				"name": firstName,
+			})
+
+			msg := tgbotapi.NewMessage(chatID, messageText)
+			msg.ReplyMarkup = tgbotapi.NewInlineKeyboardMarkup(
+				tgbotapi.NewInlineKeyboardRow(
+					tgbotapi.NewInlineKeyboardButtonData(locale.Buttons.Favorites, "favorites"),
+				),
+			)
+
+			sentMsg, err := bot.Send(msg)
+			if err != nil {
+				log.Printf("Ошибка отправки меню: %v", err)
+				return
+			}
+
+			menuMutex.Lock()
+			menuMessages[chatID] = sentMsg.MessageID
+			menuMutex.Unlock()
+		}
+
+		// Функция отправки меню помощи
+		sendHelpMenu := func(chatID int64) {
+			deletePreviousMenu(chatID)
+
+			msg := tgbotapi.NewMessage(chatID, locale.Bot.Help)
+			msg.ReplyMarkup = tgbotapi.NewInlineKeyboardMarkup(
+				tgbotapi.NewInlineKeyboardRow(
+					tgbotapi.NewInlineKeyboardButtonData(locale.Buttons.Back, "back"),
+				),
+			)
+
+			sentMsg, err := bot.Send(msg)
+			if err != nil {
+				log.Printf("Ошибка отправки меню помощи: %v", err)
+				return
+			}
+
+			menuMutex.Lock()
+			menuMessages[chatID] = sentMsg.MessageID
+			menuMutex.Unlock()
+		}
+
+		// Функция отправки избранного
+		sendFavoritesMenu := func(chatID int64) {
+			deletePreviousMenu(chatID)
+
+			msg := tgbotapi.NewMessage(chatID, locale.Bot.Save.None)
+			msg.ReplyMarkup = tgbotapi.NewInlineKeyboardMarkup(
+				tgbotapi.NewInlineKeyboardRow(
+					tgbotapi.NewInlineKeyboardButtonData(locale.Buttons.Back, "back"),
+				),
+			)
+
+			sentMsg, err := bot.Send(msg)
+			if err != nil {
+				log.Printf("Ошибка отправки избранного: %v", err)
+				return
+			}
+
+			menuMutex.Lock()
+			menuMessages[chatID] = sentMsg.MessageID
+			menuMutex.Unlock()
 		}
 
 		log.Printf(
