@@ -190,46 +190,57 @@ func main() {
 			menuMutex.Unlock()
 		}
 
-		log.Printf(
-			"[%s][%d] %s",
-			time.Now().Format(time.DateTime),
-			update.Message.From.ID,
-			update.Message.Text,
-		)
+		u := tgbotapi.NewUpdate(0)
+		u.Timeout = 30
+		updates := bot.GetUpdatesChan(u)
 
-		if update.Message.IsCommand() {
-			switch update.Message.Command() {
-			case "start":
-				// Форматирование приветствия с именем пользователя
-				messageText := formatMessage(locale.Bot.Welcome, map[string]string{
-					"name": update.Message.From.FirstName,
-				})
+		for update := range updates {
+			// Обработка нажатий на кнопки
+			if update.CallbackQuery != nil {
+				chatID := update.CallbackQuery.Message.Chat.ID
 
-				msg := tgbotapi.NewMessage(update.Message.Chat.ID, messageText)
+				switch update.CallbackQuery.Data {
+				case "favorites":
+					sendFavoritesMenu(chatID)
 
-				if _, err := bot.Send(msg); err != nil {
-					log.Printf("Ошибка отправки: %v", err)
+				case "back":
+					sendStartMenu(chatID, update.CallbackQuery.From.FirstName)
 				}
 
-			case "help":
-				msg := tgbotapi.NewMessage(update.Message.Chat.ID, locale.Bot.Help)
-				
-				if _, err := bot.Send(msg); err != nil {
-					log.Printf("Ошибка отправки: %v", err)
+				// Подтверждаем обработку callback
+				callback := tgbotapi.NewCallback(update.CallbackQuery.ID, "")
+				if _, err := bot.Request(callback); err != nil {
+					log.Printf("Ошибка callback: %v", err)
 				}
+				continue
 			}
-			continue
-		}
 
-		// Обработка обычных сообщений
-		response := tgbotapi.NewMessage(
-			update.Message.Chat.ID,
-			"Вы сказали: "+update.Message.Text,
-		)
-		response.ReplyToMessageID = update.Message.MessageID
+			if update.Message == nil {
+				continue
+			}
 
-		if _, err := bot.Send(response); err != nil {
-			log.Printf("Ошибка отправки: %v", err)
+			log.Printf(
+				"[%s][%d] %s",
+				time.Now().Format(time.DateTime),
+				update.Message.From.ID,
+				update.Message.Text,
+			)
+
+			// Удаляем сообщение пользователя сразу после получения
+			deleteMsg := tgbotapi.NewDeleteMessage(update.Message.Chat.ID, update.Message.MessageID)
+			if _, err := bot.Request(deleteMsg); err != nil {
+				log.Printf("Ошибка удаления сообщения: %v", err)
+			}
+
+			if update.Message.IsCommand() {
+				switch update.Message.Command() {
+				case "start":
+					sendStartMenu(update.Message.Chat.ID, update.Message.From.FirstName)
+				case "help":
+					sendHelpMenu(update.Message.Chat.ID)
+				}
+			} else {
+				// Для любого текста показываем стартовое меню
+				sendStartMenu(update.Message.Chat.ID, update.Message.From.FirstName)
+			}
 		}
-	}
-}
