@@ -108,6 +108,9 @@ func main() {
 	for update := range updates {
 		if update.Message == nil {
 			continue
+	// Храним ID последнего активного меню
+		var menuMessages = make(map[int64]int)
+		var menuMutex sync.Mutex
 		}
 
 		log.Printf(
