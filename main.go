@@ -111,6 +111,20 @@ func main() {
 	// Храним ID последнего активного меню
 		var menuMessages = make(map[int64]int)
 		var menuMutex sync.Mutex
+
+		// Функция для удаления предыдущего меню
+		deletePreviousMenu := func(chatID int64) {
+			menuMutex.Lock()
+			defer menuMutex.Unlock()
+
+			if msgID, exists := menuMessages[chatID]; exists {
+				deleteMsg := tgbotapi.NewDeleteMessage(chatID, msgID)
+				if _, err := bot.Request(deleteMsg); err != nil {
+					log.Printf("Ошибка удаления меню: %v", err)
+				}
+				delete(menuMessages, chatID)
+			}
+		}
 		}
 
 		log.Printf(
