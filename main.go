@@ -54,7 +54,7 @@ func loadLocale(path string) (*Locale, error) {
 	return &locale, err
 }
 
-// Заменяет плейсхолдеры в строке значениями из map
+// Заменяет названия типа {name} значениями из map
 func formatMessage(template string, params map[string]string) string {
 	result := template
 	for key, value := range params {
@@ -64,23 +64,24 @@ func formatMessage(template string, params map[string]string) string {
 	return result
 }
 
+
 func main() {
-	locale, err := loadLocale("locales.json")  // Загрузка локализации
+	locale, err := loadLocale("locales.json") // берет файл локализации
 	if err != nil {
 		log.Fatalf("Ошибка загрузки локализации: %v", err)
 	}
 
-	err = godotenv.Load()  // Загрузка переменных их .env
+	err = godotenv.Load() // берет файл .env
 	if err != nil {
-		log.Fatalf("Ошибка загрузки .env: %v", err)
+		log.Fatalf("Ошибка загрузки файла .env: %v", err)
 	}
 
 	token := os.Getenv("BOT_TOKEN")
 	if token == "" {
-		log.Fatal("BOT_TOKEN не установлен в .env")
+		log.Fatal("Токена не существует в .env")
 	}
 
-	bot, err := tgbotapi.NewBotAPI(token)
+	bot, err := tgbotapi.NewBotAPI(token) // запускаем бота
 	if err != nil {
 		log.Panicf("Ошибка инициализации бота: %v", err)
 	}
@@ -88,14 +89,16 @@ func main() {
 	bot.Debug = true
 	log.Printf("Бот %s запущен", bot.Self.UserName)
 
+
 	// Настройка команд бота
 	commands := []tgbotapi.BotCommand{
 		{Command: "start", Description: locale.Commands.Start},
 		{Command: "help", Description: locale.Commands.Help},
 	}
+
 	_, err = bot.Request(tgbotapi.NewSetMyCommands(commands...))
 	if err != nil {
-		log.Printf("Ошибка установки команд: %v", err)
+		log.Printf("Ошибка установки команд %v", err)
 	}
 
 	u := tgbotapi.NewUpdate(0)
